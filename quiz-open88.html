@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz OPEN 88 — À la découverte de l'IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cdg-bleu:       #272A5F;
+  --cdg-bleu-dark:  #1B1E45;
+  --cdg-bleu-10:    #EAEAF3;
+  --cdg-rose:       #E94059;
+  --cdg-rose-dark:  #C42E46;
+  --cdg-orange:     #F7A720;
+  --cdg-orange-dark:#D4880A;
+  --cdg-white:      #FFFFFF;
+  --cdg-gray-50:    #F8F8F8;
+  --cdg-gray-200:   #E5E5E5;
+  --cdg-gray-500:   #888888;
+  --cdg-gray-800:   #222222;
+  --font-main: 'Barlow', 'Calibri', Arial, sans-serif;
+  --shadow-md: 0 4px 16px rgba(39,42,95,0.12);
+  --shadow-lg: 0 8px 32px rgba(39,42,95,0.15);
+  --transition-base: 0.2s ease;
+  --vert:      #1E9E5A;
+  --vert-bg:   #E4F5EC;
+  --rouge-bg:  #FCE8EC;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-main);
+  color: var(--cdg-gray-800);
+  background: var(--cdg-bleu);
+}
+
+body {
+  font-size: clamp(16px, 1.4vw, 22px);
+  line-height: 1.4;
+  overflow-x: hidden;
+}
+
+button { font-family: var(--font-main); cursor: pointer; border: none; }
+
+/* ---------- App layout ---------- */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.screen { display: none; flex: 1; flex-direction: column; min-height: 100vh; }
+.screen.active { display: flex; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .screen.active { animation: fadeSlide 0.3s ease; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/* ---------- Blue screens (home / final) ---------- */
+.screen--blue {
+  background: var(--cdg-bleu);
+  color: var(--cdg-white);
+  position: relative;
+  overflow: hidden;
+}
+.screen--dark { background: var(--cdg-bleu-dark); }
+
+.watermark {
+  position: absolute;
+  bottom: -6vw; right: 2vw;
+  font-size: 42vw;
+  font-weight: 700;
+  color: rgba(255,255,255,0.04);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+.blue-content {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 4vh 5vw;
+  gap: 2.2vh;
+}
+
+.deco-bar {
+  height: 10px;
+  width: 220px;
+  background: linear-gradient(90deg, var(--cdg-rose) 33%, var(--cdg-orange) 33%);
+}
+
+.brand-tag {
+  display: inline-block;
+  background: var(--cdg-rose);
+  color: var(--cdg-white);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(13px, 1vw, 18px);
+  padding: 6px 16px;
+}
+
+h1.title {
+  font-size: clamp(32px, 5.2vw, 84px);
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--cdg-white);
+  max-width: 20ch;
+}
+
+.subtitle {
+  font-size: clamp(18px, 2.2vw, 34px);
+  font-weight: 500;
+  color: var(--cdg-orange);
+  max-width: 30ch;
+}
+
+/* ---------- Inputs / Buttons ---------- */
+.group-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 1vh;
+}
+.group-input-wrap label {
+  font-size: clamp(15px, 1.3vw, 22px);
+  color: var(--cdg-white);
+  font-weight: 500;
+}
+input.group-input {
+  border-radius: 0;
+  border: 3px solid var(--cdg-orange);
+  background: var(--cdg-white);
+  color: var(--cdg-gray-800);
+  font-size: clamp(20px, 2vw, 30px);
+  font-weight: 600;
+  padding: 12px 20px;
+  text-align: center;
+  width: min(90vw, 460px);
+  outline: none;
+}
+input.group-input:focus { border-color: var(--cdg-rose); }
+
+.btn {
+  border-radius: 0;
+  font-weight: 600;
+  font-size: clamp(17px, 1.6vw, 26px);
+  padding: 16px 34px;
+  color: var(--cdg-white);
+  background: var(--cdg-bleu);
+  transition: background var(--transition-base), transform var(--transition-base);
+  box-shadow: var(--shadow-md);
+}
+.btn:hover { background: var(--cdg-bleu-dark); }
+.btn:active { transform: translateY(1px); }
+
+.btn--primary { background: var(--cdg-bleu); }
+.btn--primary:hover { background: var(--cdg-bleu-dark); }
+
+.btn--orange { background: var(--cdg-orange); color: var(--cdg-bleu-dark); }
+.btn--orange:hover { background: var(--cdg-orange-dark); }
+
+.btn--secondary { background: var(--cdg-rose); }
+.btn--secondary:hover { background: var(--cdg-rose-dark); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--cdg-gray-500);
+  box-shadow: none;
+  border: 2px solid var(--cdg-gray-200);
+  font-size: clamp(14px, 1.2vw, 19px);
+  padding: 12px 22px;
+}
+.btn--ghost:hover { background: var(--cdg-gray-50); color: var(--cdg-gray-800); }
+
+.btn--big {
+  font-size: clamp(20px, 2.2vw, 34px);
+  padding: 20px 48px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ---------- Recap table ---------- */
+.recap {
+  width: min(92vw, 760px);
+  margin-top: 2vh;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 18px 22px;
+}
+.recap h3 {
+  color: var(--cdg-orange);
+  font-size: clamp(16px, 1.4vw, 24px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+.recap table { width: 100%; border-collapse: collapse; color: var(--cdg-white); }
+.recap th, .recap td {
+  text-align: left;
+  padding: 10px 8px;
+  font-size: clamp(14px, 1.2vw, 20px);
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.recap th {
+  color: var(--cdg-orange);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: clamp(12px, 1vw, 16px);
+  letter-spacing: 0.05em;
+}
+.recap td.score { font-weight: 700; }
+.recap .win { color: var(--cdg-orange); }
+.recap-empty { color: rgba(255,255,255,0.6); font-style: italic; }
+
+/* ---------- Question screen ---------- */
+.q-header {
+  background: var(--cdg-bleu);
+  color: var(--cdg-white);
+  border-bottom: 4px solid var(--cdg-rose);
+  padding: 18px clamp(20px, 4vw, 60px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.q-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.q-group-name {
+  font-weight: 700;
+  font-size: clamp(18px, 1.8vw, 28px);
+}
+.q-group-name .chip {
+  display: inline-block;
+  background: var(--cdg-rose);
+  border-radius: 9999px;
+  padding: 3px 14px;
+  font-size: clamp(13px, 1.1vw, 18px);
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.q-counter {
+  font-weight: 500;
+  font-size: clamp(15px, 1.4vw, 22px);
+  color: var(--cdg-orange);
+}
+.q-score {
+  font-weight: 700;
+  font-size: clamp(22px, 2.4vw, 40px);
+  color: var(--cdg-white);
+  background: var(--cdg-bleu-dark);
+  padding: 6px 20px;
+  border-left: 5px solid var(--cdg-orange);
+}
+.q-score span { color: var(--cdg-orange); }
+
+.progress {
+  height: 12px;
+  width: 100%;
+  background: rgba(255,255,255,0.18);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cdg-rose), var(--cdg-orange));
+  border-radius: 9999px;
+  transition: width 0.35s ease;
+}
+
+.q-body {
+  flex: 1;
+  background: var(--cdg-white);
+  padding: clamp(24px, 4vh, 60px) clamp(20px, 5vw, 90px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 3vh, 40px);
+}
+
+.q-statement {
+  font-size: clamp(24px, 3vw, 48px);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--cdg-bleu);
+  max-width: 30ch;
+}
+
+/* True/False buttons */
+.tf-buttons {
+  display: flex;
+  gap: clamp(16px, 3vw, 40px);
+  flex-wrap: wrap;
+}
+.tf-btn {
+  border-radius: 0;
+  flex: 1 1 300px;
+  min-height: clamp(120px, 22vh, 220px);
+  font-size: clamp(30px, 4vw, 64px);
+  font-weight: 700;
+  background: var(--cdg-white);
+  color: var(--cdg-bleu);
+  border: 4px solid var(--cdg-bleu);
+  transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+.tf-btn:hover:not(:disabled) { background: var(--cdg-bleu-10); }
+.tf-btn:disabled { cursor: default; }
+
+.answer-correct {
+  background: var(--vert-bg) !important;
+  border-color: var(--vert) !important;
+  color: var(--vert) !important;
+}
+.answer-wrong {
+  background: var(--rouge-bg) !important;
+  border-color: var(--cdg-rose) !important;
+  color: var(--cdg-rose-dark) !important;
+}
+
+/* Explanation block */
+.explain {
+  border-left: 6px solid var(--cdg-orange);
+  background: var(--cdg-gray-50);
+  padding: 20px 26px;
+  font-size: clamp(17px, 1.7vw, 26px);
+  line-height: 1.45;
+  display: none;
+}
+.explain.show { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .explain.show { animation: fadeSlide 0.3s ease; }
+}
+.explain .verdict {
+  font-weight: 700;
+  display: block;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.explain .verdict.ok { color: var(--vert); }
+.explain .verdict.ko { color: var(--cdg-rose-dark); }
+.explain a {
+  color: var(--cdg-bleu);
+  font-weight: 700;
+  text-decoration: underline;
+  display: inline-block;
+  margin-top: 12px;
+}
+.explain a:hover { color: var(--cdg-rose); }
+
+/* Footer nav */
+.q-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px clamp(20px, 5vw, 90px);
+  background: var(--cdg-white);
+  border-top: 1px solid var(--cdg-gray-200);
+  flex-wrap: wrap;
+}
+
+/* ---------- Matching (reliure) ---------- */
+.match-wrap {
+  display: flex;
+  gap: clamp(20px, 5vw, 80px);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.match-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 280px;
+  max-width: 420px;
+}
+.match-col h4 {
+  font-size: clamp(15px, 1.4vw, 22px);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cdg-rose);
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 3px solid var(--cdg-orange);
+}
+.match-item {
+  border-radius: 0;
+  border: 3px solid var(--cdg-bleu);
+  background: var(--cdg-white);
+  color: var(--cdg-bleu);
+  font-size: clamp(18px, 2vw, 30px);
+  font-weight: 600;
+  padding: 18px 20px;
+  text-align: center;
+  transition: all var(--transition-base);
+  position: relative;
+}
+.match-item:hover:not(:disabled) { background: var(--cdg-bleu-10); }
+.match-item.selected {
+  background: var(--cdg-orange);
+  border-color: var(--cdg-orange-dark);
+  color: var(--cdg-bleu-dark);
+}
+.match-item.paired {
+  background: var(--cdg-bleu-10);
+  border-color: var(--cdg-rose);
+}
+.match-item .pair-badge {
+  position: absolute;
+  top: 6px; right: 8px;
+  background: var(--cdg-rose);
+  color: #fff;
+  border-radius: 9999px;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700;
+}
+.match-item.pair-ok {
+  background: var(--vert-bg) !important;
+  border-color: var(--vert) !important;
+  color: var(--vert) !important;
+}
+.match-item.pair-ko {
+  background: var(--rouge-bg) !important;
+  border-color: var(--cdg-rose) !important;
+  color: var(--cdg-rose-dark) !important;
+}
+.match-hint {
+  text-align: center;
+  color: var(--cdg-gray-500);
+  font-size: clamp(15px, 1.3vw, 21px);
+  font-style: italic;
+}
+
+/* ---------- Bonus / MC options ---------- */
+.mc-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(14px, 2vw, 26px);
+}
+.mc-btn {
+  border-radius: 0;
+  border: 4px solid var(--cdg-bleu);
+  background: var(--cdg-white);
+  color: var(--cdg-bleu);
+  font-size: clamp(19px, 2vw, 30px);
+  font-weight: 600;
+  padding: 26px 24px;
+  text-align: left;
+  transition: all var(--transition-base);
+  min-height: 100px;
+}
+.mc-btn:hover:not(:disabled) { background: var(--cdg-bleu-10); }
+
+/* ---------- Final screen ---------- */
+.final-score {
+  font-size: clamp(60px, 12vw, 180px);
+  font-weight: 700;
+  color: var(--cdg-white);
+  line-height: 1;
+}
+.final-score .slash { color: var(--cdg-orange); }
+.final-label {
+  font-size: clamp(20px, 2.4vw, 38px);
+  font-weight: 500;
+  color: var(--cdg-orange);
+}
+.bonus-line {
+  font-size: clamp(18px, 1.8vw, 28px);
+  color: var(--cdg-white);
+}
+.bonus-line .yes { color: var(--vert); font-weight: 700; }
+.bonus-line .no  { color: var(--cdg-orange); font-weight: 700; }
+
+.badge-win {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cdg-orange);
+  color: var(--cdg-bleu-dark);
+  font-size: clamp(22px, 2.6vw, 42px);
+  font-weight: 700;
+  padding: 16px 36px;
+  border: 4px solid var(--cdg-white);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.badge-encourage {
+  font-size: clamp(20px, 2.2vw, 34px);
+  font-weight: 600;
+  color: var(--cdg-white);
+  background: var(--cdg-rose);
+  padding: 14px 32px;
+}
+
+.kbd-hint {
+  position: fixed;
+  bottom: 10px; left: 12px;
+  font-size: 13px;
+  color: var(--cdg-gray-500);
+  background: rgba(255,255,255,0.85);
+  padding: 4px 10px;
+  z-index: 50;
+  border: 1px solid var(--cdg-gray-200);
+}
+.screen--blue ~ .kbd-hint,
+.kbd-hint.on-blue { background: rgba(0,0,0,0.25); color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.2); }
+
+@media (max-width: 640px) {
+  .q-header-top { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ ACCUEIL ============ -->
+  <section class="screen screen--blue active" id="screen-home">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">CDG 88</span>
+      <h1 class="title">Quiz OPEN 88 — À la découverte de l'IA</h1>
+      <p class="subtitle">Testez vos réflexes face à l'intelligence artificielle. Une manche par groupe, 10 questions + 1 bonus.</p>
+
+      <div class="group-input-wrap">
+        <label for="groupName">Nom du groupe qui va passer</label>
+        <input type="text" id="groupName" class="group-input" value="Groupe A" autocomplete="off">
+      </div>
+
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-start">Démarrer la manche ▶</button>
+      </div>
+
+      <div class="recap" id="home-recap" style="display:none">
+        <h3>Manches déjà jouées</h3>
+        <div id="home-recap-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUESTION ============ -->
+  <section class="screen" id="screen-question">
+    <div class="q-header">
+      <div class="q-header-top">
+        <div class="q-group-name"><span class="chip" id="q-chip">Manche</span><span id="q-group"></span></div>
+        <div class="q-score">Bonnes réponses : <span id="q-score">0</span></div>
+      </div>
+      <div class="q-counter" id="q-counter">Question 1 / 10</div>
+      <div class="progress"><div class="progress-fill" id="q-progress"></div></div>
+    </div>
+
+    <div class="q-body">
+      <div class="q-statement" id="q-statement"></div>
+
+      <!-- Zone de réponse dynamique -->
+      <div id="q-answer-zone"></div>
+
+      <!-- Explication -->
+      <div class="explain" id="q-explain">
+        <span class="verdict" id="q-verdict"></span>
+        <span id="q-explain-text"></span>
+        <div id="q-link-wrap"></div>
+      </div>
+    </div>
+
+    <div class="q-footer">
+      <button class="btn btn--ghost" id="btn-prev">◀ Précédent</button>
+      <button class="btn btn--primary" id="btn-next" disabled>Question suivante ▶</button>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section class="screen screen--blue screen--dark" id="screen-final">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">Résultat de la manche</span>
+      <div class="final-label" id="final-group"></div>
+      <div class="final-score"><span id="final-pts">0</span><span class="slash"> / 10</span></div>
+      <div class="bonus-line" id="final-bonus"></div>
+      <div id="final-badge"></div>
+
+      <div class="recap" id="final-recap">
+        <h3>Récapitulatif des groupes</h3>
+        <div id="final-recap-body"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-newgroup">Nouveau groupe ▶</button>
+        <button class="btn btn--ghost" id="btn-reset" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3)">Tout réinitialiser</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="kbd-hint">← Précédent · → Suivant</div>
+
+<script>
+"use strict";
+
+/* ================= DONNÉES DU QUIZ ================= */
+const QUESTIONS = [
+  {
+    type: "tf",
+    statement: "Je peux saisir les données personnelles d'un administré (nom, adresse, situation) dans un ChatGPT gratuit.",
+    correct: false, // FAUX
+    verdict: "Faux",
+    explanation: "C'est encadré par le RGPD et par l'AI Act, le règlement européen sur l'IA entré en vigueur le 1er août 2024, qui s'applique en même temps que le RGPD dès qu'une IA traite des données personnelles. Réflexe à retenir : jamais de données nominatives dans un outil grand public.",
+    link: { url: "https://www.cnil.fr/fr/intelligence-artificielle", label: "En savoir plus — CNIL & IA" }
+  },
+  {
+    type: "tf",
+    statement: "Une intelligence artificielle peut inventer une information totalement fausse en ayant l'air parfaitement sûre d'elle.",
+    correct: true, // VRAI
+    verdict: "Vrai",
+    explanation: "On appelle ça une « hallucination ». L'IA génère une réponse plausible, pas forcément vraie. Règle d'or : on vérifie toujours ce que produit une IA."
+  },
+  {
+    type: "tf",
+    statement: "L'intelligence artificielle est une invention récente, née avec ChatGPT dans les années 2020.",
+    correct: false,
+    verdict: "Faux",
+    explanation: "Le terme « intelligence artificielle » a été inventé en 1956, lors de la conférence de Dartmouth. ChatGPT (2022) n'est que le moment où le grand public l'a découverte. L'IA a près de 70 ans ; c'est son usage facile qui est nouveau."
+  },
+  {
+    type: "tf",
+    statement: "Les voitures autonomes sont une forme d'intelligence artificielle.",
+    correct: true,
+    verdict: "Vrai",
+    explanation: "Elles utilisent l'IA pour « voir » la route, reconnaître les panneaux et les piétons, et décider en temps réel. L'IA n'est pas que du texte : elle analyse des images, pilote, anticipe."
+  },
+  {
+    type: "tf",
+    statement: "Il n'existe aucun outil d'IA sécurisé et validé par l'État pour les agents publics.",
+    correct: false,
+    verdict: "Faux",
+    explanation: "L'État a déployé « L'Assistant », un outil d'IA générative souverain développé par la DINUM avec l'entreprise française Mistral AI, hébergé en France sur infrastructure sécurisée et désormais accessible à environ un million d'agents. Tous les outils IA validés sont recensés sur le site officiel ia.numerique.gouv.fr.",
+    link: { url: "https://ia.numerique.gouv.fr", label: "Voir les outils IA de l'État" }
+  },
+  {
+    type: "tf",
+    statement: "La France est un pays européen qui possède sa propre intelligence artificielle.",
+    correct: true,
+    verdict: "Vrai",
+    explanation: "Mistral AI, entreprise française, développe ses propres modèles — ceux-là mêmes qui équipent « L'Assistant » de l'État français. L'Europe et la France sont bien dans la course, pas seulement les États-Unis.",
+    link: { url: "https://mistral.ai", label: "Découvrir Mistral AI" }
+  },
+  {
+    type: "tf",
+    statement: "Si une IA rédige la réponse, l'agent n'est plus responsable de ce qui est transmis à l'usager.",
+    correct: false,
+    verdict: "Faux",
+    explanation: "La responsabilité reste toujours humaine. L'agent relit, corrige, valide et engage sa fonction. L'IA est un assistant, jamais un décideur."
+  },
+  {
+    type: "tf",
+    statement: "Une IA générative suit un modèle probabiliste et ne comprend pas réellement le langage humain.",
+    correct: true,
+    verdict: "Vrai",
+    explanation: "Elle calcule le mot le plus probable après le précédent, sans conscience du sens. Le site officiel de l'État le reconnaît d'ailleurs : les réponses générées sont des propositions probabilistes qui peuvent contenir des erreurs. Très puissant statistiquement, mais ça reste du calcul."
+  },
+  {
+    type: "tf",
+    statement: "Il faut savoir coder ou être informaticien pour utiliser une IA générative.",
+    correct: false,
+    verdict: "Faux",
+    explanation: "On dialogue avec une IA en langage courant, comme dans une conversation normale. Aucune compétence technique n'est requise : l'IA est accessible à tout le monde."
+  },
+  {
+    type: "match",
+    statement: "Reliez chaque entreprise à son intelligence artificielle.",
+    left:  ["OpenAI", "Google", "Mistral", "Anthropic"],
+    right: ["Le Chat", "Claude", "ChatGPT", "Gemini"], // ordre mélangé
+    pairs: { "OpenAI": "ChatGPT", "Google": "Gemini", "Mistral": "Le Chat", "Anthropic": "Claude" },
+    explanation: "Il n'existe pas « une » IA, mais plusieurs acteurs en concurrence : OpenAI (ChatGPT), Google (Gemini), la française Mistral (Le Chat) et Anthropic (Claude). Le marché de l'IA est mondial et très dynamique."
+  }
+];
+
+const BONUS = {
+  statement: "Question bonus 🤖 Selon vous, qui a créé ce quiz ?",
+  options: [
+    "Un formateur du CDG88",
+    "Une intelligence artificielle",
+    "Un stagiaire",
+    "Le service communication"
+  ],
+  correctIndex: 1,
+  reveal: "Surprise ! Ce quiz a été entièrement conçu avec l'aide d'une intelligence artificielle générative. Vous venez de jouer… contre la machine ! 🤖"
+};
+
+const TOTAL = QUESTIONS.length; // 10
+const BONUS_INDEX = TOTAL;      // index de la question bonus
+
+/* ================= ÉTAT DU JEU ================= */
+const state = {
+  groupName: "Groupe A",
+  nextGroupLetter: 0,          // 0 = A
+  current: 0,                  // index question courante (0..9), TOTAL = bonus
+  answers: new Array(TOTAL).fill(null), // par question : { correct: bool } ou null
+  bonusAnswered: false,
+  bonusCorrect: false,
+  history: []                  // [{ name, score, bonus }]
+};
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+const screens = {
+  home: $("screen-home"),
+  question: $("screen-question"),
+  final: $("screen-final")
+};
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[name].classList.add("active");
+  updateKbdHint(name);
+  window.scrollTo(0, 0);
+}
+
+function updateKbdHint(name) {
+  const hint = document.querySelector(".kbd-hint");
+  hint.classList.toggle("on-blue", name === "home" || name === "final");
+  hint.style.display = (name === "question") ? "block" : "none";
+}
+
+function currentScore() {
+  return state.answers.reduce((acc, a) => acc + (a && a.correct ? 1 : 0), 0);
+}
+
+function nextLetterName(idx) {
+  // A, B, C ... Z, then AA, AB...
+  let s = "";
+  idx += 1;
+  while (idx > 0) {
+    idx--;
+    s = String.fromCharCode(65 + (idx % 26)) + s;
+    idx = Math.floor(idx / 26);
+  }
+  return "Groupe " + s;
+}
+
+/* ================= ACCUEIL ================= */
+function renderHome() {
+  $("groupName").value = state.groupName;
+  const recap = $("home-recap");
+  if (state.history.length > 0) {
+    recap.style.display = "block";
+    $("home-recap-body").innerHTML = recapTableHTML();
+  } else {
+    recap.style.display = "none";
+  }
+  showScreen("home");
+}
+
+function recapTableHTML() {
+  let rows = state.history.map((h, i) => {
+    const win = h.score >= 5;
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(h.name)}</td>
+      <td class="score${win ? " win" : ""}">${h.score} / 10${win ? " 🏆" : ""}</td>
+      <td>${h.bonus ? "✓ +1" : "—"}</td>
+    </tr>`;
+  }).join("");
+  return `<table>
+    <thead><tr><th>#</th><th>Groupe</th><th>Score</th><th>Bonus</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+/* ================= DÉMARRAGE MANCHE ================= */
+function startRound() {
+  const name = $("groupName").value.trim() || state.groupName;
+  state.groupName = name;
+  state.current = 0;
+  state.answers = new Array(TOTAL).fill(null);
+  state.bonusAnswered = false;
+  state.bonusCorrect = false;
+  renderQuestion();
+  showScreen("question");
+}
+
+/* ================= AFFICHAGE QUESTION ================= */
+function renderQuestion() {
+  const i = state.current;
+
+  // En-tête commun
+  $("q-group").textContent = state.groupName;
+  $("q-score").textContent = currentScore();
+
+  const explain = $("q-explain");
+  explain.classList.remove("show");
+  const zone = $("q-answer-zone");
+  zone.innerHTML = "";
+  $("btn-next").disabled = true;
+  $("btn-prev").style.visibility = (i === 0) ? "hidden" : "visible";
+
+  if (i < TOTAL) {
+    // Question normale
+    const q = QUESTIONS[i];
+    $("q-chip").textContent = "Manche";
+    $("q-counter").textContent = `Question ${i + 1} / ${TOTAL}`;
+    $("q-progress").style.width = ((i) / (TOTAL)) * 100 + "%";
+    $("q-statement").textContent = q.statement;
+    $("btn-next").textContent = (i === TOTAL - 1) ? "Question bonus ▶" : "Question suivante ▶";
+
+    if (q.type === "tf") renderTF(q, i);
+    else if (q.type === "match") renderMatch(q, i);
+
+    // Si déjà répondu (retour arrière), on ré-affiche l'état
+    if (state.answers[i] !== null) {
+      restoreAnswered(q, i);
+    }
+  } else {
+    // Question bonus
+    renderBonus();
+  }
+}
+
+function setExplanation(q, isCorrect) {
+  const explain = $("q-explain");
+  const verdict = $("q-verdict");
+  if (q.verdict) {
+    verdict.textContent = q.verdict;
+    verdict.className = "verdict " + (q.correct ? "ok" : "ko");
+    verdict.style.display = "block";
+  } else {
+    verdict.style.display = "none";
+  }
+  $("q-explain-text").textContent = q.explanation;
+  const linkWrap = $("q-link-wrap");
+  linkWrap.innerHTML = q.link
+    ? `<a href="${q.link.url}" target="_blank" rel="noopener">${escapeHtml(q.link.label)} ↗</a>`
+    : "";
+  explain.classList.add("show");
+}
+
+/* ---------- VRAI / FAUX ---------- */
+function renderTF(q, i) {
+  const zone = $("q-answer-zone");
+  zone.innerHTML = `
+    <div class="tf-buttons">
+      <button class="tf-btn" data-val="true">VRAI</button>
+      <button class="tf-btn" data-val="false">FAUX</button>
+    </div>`;
+  const btns = zone.querySelectorAll(".tf-btn");
+  btns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (state.answers[i] !== null) return;
+      const chosen = btn.dataset.val === "true";
+      const isCorrect = chosen === q.correct;
+      state.answers[i] = { correct: isCorrect };
+      applyTFFeedback(q, btns, chosen);
+      setExplanation(q, isCorrect);
+      $("q-score").textContent = currentScore();
+      $("btn-next").disabled = false;
+    });
+  });
+}
+
+function applyTFFeedback(q, btns, chosen) {
+  btns.forEach(btn => {
+    btn.disabled = true;
+    const val = btn.dataset.val === "true";
+    if (val === q.correct) {
+      btn.classList.add("answer-correct");
+      btn.insertAdjacentHTML("beforeend", " ✓");
+    }
+    if (val === chosen && chosen !== q.correct) {
+      btn.classList.add("answer-wrong");
+      btn.insertAdjacentHTML("beforeend", " ✗");
+    }
+  });
+}
+
+/* ---------- RELIURE ---------- */
+let matchSel = { left: null };
+let matchPairs = {}; // left -> right
+
+function renderMatch(q, i) {
+  matchSel = { left: null };
+  matchPairs = {};
+  const zone = $("q-answer-zone");
+  const leftHtml = q.left.map(l => `<button class="match-item" data-side="left" data-val="${escapeHtml(l)}">${escapeHtml(l)}</button>`).join("");
+  const rightHtml = q.right.map(r => `<button class="match-item" data-side="right" data-val="${escapeHtml(r)}">${escapeHtml(r)}</button>`).join("");
+  zone.innerHTML = `
+    <p class="match-hint">Cliquez une entreprise, puis son IA. Les 4 paires justes = 1 point.</p>
+    <div class="match-wrap">
+      <div class="match-col"><h4>Entreprises</h4>${leftHtml}</div>
+      <div class="match-col"><h4>Produits</h4>${rightHtml}</div>
+    </div>
+    <div class="btn-row" style="justify-content:center;margin-top:10px">
+      <button class="btn btn--primary" id="btn-validate-match" disabled>Valider les associations</button>
+    </div>`;
+
+  zone.querySelectorAll('.match-item').forEach(item => {
+    item.addEventListener("click", () => onMatchClick(item, q));
+  });
+  $("btn-validate-match").addEventListener("click", () => validateMatch(q, i));
+}
+
+function onMatchClick(item, q) {
+  if (state.answers[state.current] !== null) return;
+  const side = item.dataset.side;
+  const val = item.dataset.val;
+
+  if (side === "left") {
+    // toggle selection / re-pick
+    $("q-answer-zone").querySelectorAll('[data-side="left"]').forEach(el => el.classList.remove("selected"));
+    if (matchSel.left === val) { matchSel.left = null; return; }
+    matchSel.left = val;
+    item.classList.add("selected");
+  } else {
+    // right clicked
+    if (!matchSel.left) return;
+    // remove any existing pairing that used this right OR this left
+    for (const l in matchPairs) {
+      if (matchPairs[l] === val) delete matchPairs[l];
+    }
+    matchPairs[matchSel.left] = val;
+    matchSel.left = null;
+    refreshMatchUI(q);
+  }
+}
+
+function refreshMatchUI(q) {
+  const zone = $("q-answer-zone");
+  zone.querySelectorAll('[data-side="left"]').forEach(el => {
+    el.classList.remove("selected", "paired");
+    const badge = el.querySelector(".pair-badge");
+    if (badge) badge.remove();
+  });
+  zone.querySelectorAll('[data-side="right"]').forEach(el => {
+    el.classList.remove("paired", "selected");
+    const badge = el.querySelector(".pair-badge");
+    if (badge) badge.remove();
+  });
+
+  const lefts = q.left;
+  let n = 0;
+  for (const l in matchPairs) {
+    n++;
+    const num = lefts.indexOf(l) + 1;
+    const leftEl = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+    const rightEl = zone.querySelector(`[data-side="right"][data-val="${cssEscape(matchPairs[l])}"]`);
+    if (leftEl) { leftEl.classList.add("paired"); leftEl.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+    if (rightEl) { rightEl.classList.add("paired"); rightEl.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+  }
+  $("btn-validate-match").disabled = Object.keys(matchPairs).length !== q.left.length;
+}
+
+function cssEscape(s) {
+  return String(s).replace(/["\\]/g, "\\$&");
+}
+
+function validateMatch(q, i) {
+  if (state.answers[i] !== null) return;
+  let allCorrect = true;
+  const zone = $("q-answer-zone");
+  q.left.forEach(l => {
+    const chosen = matchPairs[l];
+    const correct = q.pairs[l];
+    const leftEl = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+    const rightEl = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen)}"]`);
+    if (chosen === correct) {
+      if (leftEl) leftEl.classList.add("pair-ok");
+      if (rightEl) rightEl.classList.add("pair-ok");
+    } else {
+      allCorrect = false;
+      if (leftEl) leftEl.classList.add("pair-ko");
+      if (rightEl) rightEl.classList.add("pair-ko");
+    }
+  });
+  zone.querySelectorAll(".match-item").forEach(el => el.disabled = true);
+  $("btn-validate-match").disabled = true;
+  state.answers[i] = { correct: allCorrect, pairs: { ...matchPairs } };
+  setExplanation(q, allCorrect);
+  $("q-score").textContent = currentScore();
+  $("btn-next").disabled = false;
+}
+
+/* ---------- QUESTION BONUS ---------- */
+function renderBonus() {
+  $("q-chip").textContent = "Bonus";
+  $("q-counter").textContent = "Question bonus 🤖";
+  $("q-progress").style.width = "100%";
+  $("q-statement").textContent = BONUS.statement;
+  $("btn-next").textContent = "Voir le résultat ▶";
+  $("btn-prev").style.visibility = "visible";
+
+  const zone = $("q-answer-zone");
+  zone.innerHTML = `<div class="mc-options">${
+    BONUS.options.map((o, idx) => `<button class="mc-btn" data-idx="${idx}">${escapeHtml(o)}</button>`).join("")
+  }</div>`;
+
+  const btns = zone.querySelectorAll(".mc-btn");
+  btns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (state.bonusAnswered) return;
+      const idx = parseInt(btn.dataset.idx, 10);
+      state.bonusAnswered = true;
+      state.bonusCorrect = (idx === BONUS.correctIndex);
+      btns.forEach(b => {
+        b.disabled = true;
+        const bIdx = parseInt(b.dataset.idx, 10);
+        if (bIdx === BONUS.correctIndex) { b.classList.add("answer-correct"); b.insertAdjacentHTML("beforeend", " ✓"); }
+        else if (bIdx === idx) { b.classList.add("answer-wrong"); b.insertAdjacentHTML("beforeend", " ✗"); }
+      });
+      // Message révélé
+      const explain = $("q-explain");
+      $("q-verdict").style.display = "block";
+      $("q-verdict").className = "verdict ok";
+      $("q-verdict").textContent = state.bonusCorrect ? "Bonne réponse ! +1 point bonus" : "Ce n'était pas la bonne… mais quelle surprise !";
+      $("q-explain-text").textContent = BONUS.reveal;
+      $("q-link-wrap").innerHTML = "";
+      explain.classList.add("show");
+      $("btn-next").disabled = false;
+    });
+  });
+
+  // Restaurer si déjà répondu (retour arrière)
+  if (state.bonusAnswered) {
+    btns.forEach(b => {
+      b.disabled = true;
+      const bIdx = parseInt(b.dataset.idx, 10);
+      if (bIdx === BONUS.correctIndex) { b.classList.add("answer-correct"); b.insertAdjacentHTML("beforeend", " ✓"); }
+    });
+    const explain = $("q-explain");
+    $("q-verdict").style.display = "block";
+    $("q-verdict").className = "verdict ok";
+    $("q-verdict").textContent = state.bonusCorrect ? "Bonne réponse ! +1 point bonus" : "Ce n'était pas la bonne… mais quelle surprise !";
+    $("q-explain-text").textContent = BONUS.reveal;
+    explain.classList.add("show");
+    $("btn-next").disabled = false;
+  } else {
+    $("btn-next").disabled = true;
+  }
+}
+
+/* ---------- Restauration état répondu (retour arrière) ---------- */
+function restoreAnswered(q, i) {
+  const zone = $("q-answer-zone");
+  if (q.type === "tf") {
+    const btns = zone.querySelectorAll(".tf-btn");
+    // On ne connait pas le clic exact ; on met en évidence la bonne réponse,
+    // et si la réponse était fausse, on marque l'autre bouton comme faux.
+    btns.forEach(btn => {
+      btn.disabled = true;
+      const val = btn.dataset.val === "true";
+      if (val === q.correct) { btn.classList.add("answer-correct"); btn.insertAdjacentHTML("beforeend", " ✓"); }
+      else if (!state.answers[i].correct) { btn.classList.add("answer-wrong"); btn.insertAdjacentHTML("beforeend", " ✗"); }
+    });
+    setExplanation(q, state.answers[i].correct);
+    $("btn-next").disabled = false;
+  } else if (q.type === "match") {
+    // Recharger les paires enregistrées et revalider l'affichage
+    matchPairs = { ...(state.answers[i].pairs || {}) };
+    q.left.forEach(l => {
+      const chosen = matchPairs[l];
+      const correct = q.pairs[l];
+      const leftEl = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+      const rightEl = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen)}"]`);
+      if (chosen === correct) { if (leftEl) leftEl.classList.add("pair-ok"); if (rightEl) rightEl.classList.add("pair-ok"); }
+      else { if (leftEl) leftEl.classList.add("pair-ko"); if (rightEl) rightEl.classList.add("pair-ko"); }
+    });
+    zone.querySelectorAll(".match-item").forEach(el => el.disabled = true);
+    const vb = $("btn-validate-match"); if (vb) vb.disabled = true;
+    setExplanation(q, state.answers[i].correct);
+    $("btn-next").disabled = false;
+  }
+}
+
+/* ================= NAVIGATION ================= */
+function goNext() {
+  if (state.current < TOTAL) {
+    // question normale : besoin d'une réponse
+    if (state.answers[state.current] === null) return;
+    state.current++;
+    renderQuestion();
+  } else {
+    // sur la bonus
+    if (!state.bonusAnswered) return;
+    finishRound();
+  }
+}
+
+function goPrev() {
+  if (state.current === 0) return;
+  state.current--;
+  renderQuestion();
+}
+
+/* ================= FINAL ================= */
+function finishRound() {
+  const score = currentScore();
+  // Enregistrer la manche dans l'historique
+  state.history.push({ name: state.groupName, score: score, bonus: state.bonusCorrect });
+
+  $("final-group").textContent = state.groupName;
+  $("final-pts").textContent = score;
+  $("final-bonus").innerHTML = state.bonusCorrect
+    ? 'Point bonus : <span class="yes">obtenu ✓ (+1)</span>'
+    : 'Point bonus : <span class="no">non obtenu</span>';
+
+  const badge = $("final-badge");
+  if (score >= 5) {
+    badge.innerHTML = '<div class="badge-win">🏆 Remporte des points OPEN 88</div>';
+  } else {
+    badge.innerHTML = '<div class="badge-encourage">Presque ! Encore un petit effort, bravo pour la participation 👏</div>';
+  }
+
+  $("final-recap-body").innerHTML = recapTableHTML();
+  showScreen("final");
+}
+
+/* ================= NOUVEAU GROUPE / RESET ================= */
+function newGroup() {
+  // Incrémenter la lettre par défaut
+  state.nextGroupLetter++;
+  state.groupName = nextLetterName(state.nextGroupLetter);
+  state.current = 0;
+  state.answers = new Array(TOTAL).fill(null);
+  state.bonusAnswered = false;
+  state.bonusCorrect = false;
+  renderHome();
+}
+
+function resetAll() {
+  if (!confirm("Réinitialiser tout l'événement ? Le récapitulatif des groupes sera effacé.")) return;
+  state.history = [];
+  state.nextGroupLetter = 0;
+  state.groupName = "Groupe A";
+  state.current = 0;
+  state.answers = new Array(TOTAL).fill(null);
+  state.bonusAnswered = false;
+  state.bonusCorrect = false;
+  renderHome();
+}
+
+/* ================= ÉVÉNEMENTS ================= */
+$("btn-start").addEventListener("click", startRound);
+$("btn-next").addEventListener("click", goNext);
+$("btn-prev").addEventListener("click", goPrev);
+$("btn-newgroup").addEventListener("click", newGroup);
+$("btn-reset").addEventListener("click", resetAll);
+
+$("groupName").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") startRound();
+});
+
+// Navigation clavier globale (uniquement sur écran question)
+document.addEventListener("keydown", (e) => {
+  if (!screens.question.classList.contains("active")) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea") return;
+  if (e.key === "ArrowRight") { e.preventDefault(); if (!$("btn-next").disabled) goNext(); }
+  else if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+});
+
+/* ================= INIT ================= */
+renderHome();
+</script>
+</body>
+</html>
