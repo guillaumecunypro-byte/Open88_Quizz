@@ -356,15 +356,18 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
 .q-body {
   flex: 1;
   background: var(--cdg-white);
-  padding: clamp(24px, 4vh, 60px) clamp(20px, 5vw, 90px);
+  padding: clamp(28px, 5vh, 72px) clamp(20px, 5vw, 90px);
   display: flex;
   flex-direction: column;
-  gap: clamp(20px, 3vh, 40px);
+  justify-content: center;   /* contenu centré verticalement */
+  align-items: center;       /* contenu centré horizontalement */
+  text-align: center;
+  gap: clamp(28px, 5vh, 64px);
 }
 
 .q-type-tag {
   display: inline-block;
-  align-self: flex-start;
+  align-self: center;
   font-size: clamp(12px, 1vw, 16px);
   font-weight: 700;
   text-transform: uppercase;
@@ -375,11 +378,19 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
 }
 
 .q-statement {
-  font-size: clamp(24px, 3vw, 48px);
+  font-size: clamp(26px, 3.2vw, 52px);
   font-weight: 600;
   line-height: 1.25;
   color: var(--cdg-bleu);
-  max-width: 34ch;
+  max-width: 30ch;
+  margin: 0 auto;
+}
+
+/* Zone de réponse : centrée et cadrée pour un affichage étalé et équilibré */
+#q-answer-zone {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* True/False buttons */
@@ -425,6 +436,10 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
   font-size: clamp(17px, 1.7vw, 26px);
   line-height: 1.45;
   display: none;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: left;
 }
 .explain.show { display: block; }
 @media (prefers-reduced-motion: no-preference) {
@@ -538,8 +553,12 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
 /* ---------- QCM / MC options ---------- */
 .mc-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: clamp(14px, 2vw, 26px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));  /* grille 2×2 équilibrée */
+  gap: clamp(16px, 2vw, 30px);
+  width: 100%;
+}
+@media (max-width: 760px) {
+  .mc-options { grid-template-columns: 1fr; }
 }
 .mc-btn {
   border-radius: 0;
