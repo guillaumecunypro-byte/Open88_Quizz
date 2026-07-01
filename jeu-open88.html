@@ -161,6 +161,32 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
 .answer-wrong { background:var(--rouge-bg)!important; border-color:var(--cdg-rose)!important; color:var(--cdg-rose-dark)!important; }
 .answer-wrong .mc-key { background:var(--cdg-rose)!important; }
 
+/* Sélection multiple */
+.sel-hint { color:var(--cdg-gray-500); font-style:italic; font-size:clamp(15px,1.3vw,21px); width:100%; text-align:center; }
+.select-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(12px,1.6vw,22px); width:100%; }
+@media (max-width:760px){ .select-grid{ grid-template-columns:1fr; } }
+.sel-btn { border-radius:0; border:4px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-size:clamp(17px,1.8vw,26px); font-weight:600; padding:18px 20px; text-align:left; transition:all var(--transition-base); }
+.sel-btn:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.sel-btn.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+/* Nuage de mots */
+.cloud-wrap { display:flex; flex-wrap:wrap; gap:14px 24px; justify-content:center; align-items:center; width:100%; padding:8px; }
+.cloud-chip { border-radius:9999px; border:3px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-weight:700; padding:12px 28px; transition:all var(--transition-base); line-height:1.1; }
+.cloud-chip:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.cloud-chip.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+.cloud-chip.cz-s { font-size:clamp(16px,1.6vw,24px); }
+.cloud-chip.cz-m { font-size:clamp(20px,2.2vw,34px); }
+.cloud-chip.cz-l { font-size:clamp(26px,3vw,46px); }
+/* Relier */
+.match-wrap { display:flex; gap:clamp(20px,5vw,70px); justify-content:center; flex-wrap:wrap; width:100%; }
+.match-col { display:flex; flex-direction:column; gap:12px; flex:1 1 260px; max-width:400px; }
+.match-item { border-radius:0; border:3px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-size:clamp(17px,1.8vw,26px); font-weight:600; padding:16px; text-align:center; transition:all var(--transition-base); position:relative; }
+.match-item:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.match-item.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+.match-item.paired { background:var(--cdg-bleu-10); border-color:var(--cdg-rose); }
+.match-item .pair-badge { position:absolute; top:4px; right:6px; background:var(--cdg-rose); color:#fff; border-radius:9999px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+.match-item.pair-ok { background:var(--vert-bg)!important; border-color:var(--vert)!important; color:var(--vert)!important; }
+.match-item.pair-ko { background:var(--rouge-bg)!important; border-color:var(--cdg-rose)!important; color:var(--cdg-rose-dark)!important; }
+
 .explain { border-left:6px solid var(--cdg-orange); background:var(--cdg-gray-50); padding:20px 26px; font-size:clamp(16px,1.6vw,24px); line-height:1.45; display:none; width:100%; max-width:1000px; margin:0 auto; text-align:left; }
 .explain.show { display:block; }
 @media (prefers-reduced-motion: no-preference){ .explain.show{ animation:fadeSlide 0.35s ease; } }
@@ -193,7 +219,7 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
       <div class="deco-bar"></div>
       <span class="brand-tag">CDG 88 · Jeu de plateau</span>
       <h1 class="title">Jeu OPEN 88 — À la découverte de l'IA</h1>
-      <p class="subtitle">Lancez le dé, avancez sur le plateau, choisissez votre pari de difficulté et atteignez 10 points en 10 lancés !</p>
+      <p class="subtitle">Lancez le dé, avancez sur le plateau, choisissez votre pari de difficulté et atteignez 10 points en 10 questions ! (Les cases bonus ne comptent pas comme une question.)</p>
       <div class="themes-legend" id="themes-legend"></div>
       <div class="group-input-wrap">
         <label for="teamName">Nom de l'équipe qui va jouer</label>
@@ -214,7 +240,7 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
     <div class="g-header">
       <div class="g-team"><span class="chip">Manche</span><span id="g-team"></span></div>
       <div class="g-stats">
-        <div class="g-pill">Lancé <span class="n" id="g-roll">0</span> / 10</div>
+        <div class="g-pill">Question <span class="n" id="g-roll">0</span> / 10</div>
         <div class="g-pill score-box">Score : <span class="n" id="g-score">0</span> pts</div>
       </div>
     </div>
@@ -337,7 +363,15 @@ const CARDS = [
   { theme:"D", level:2, type:"qcm", options:["Le RGPD","L'AI Act","Le Cloud Act","Le DSA"], correctIndex:1, statement:"Quel règlement européen, entré en vigueur en 2024, est le premier cadre mondial à encadrer l'IA selon son niveau de risque ?", comment:"L'AI Act. Il classe les IA par niveau de risque et interdit certains usages jugés inacceptables. Il complète le RGPD, qui protège les données.", anec:"Il interdit par exemple la « notation sociale » des citoyens, et prévoit des amendes pouvant atteindre 7 % du chiffre d'affaires mondial — plus sévère que le RGPD.", link:{ url:CNIL, label:"CNIL & IA" } },
   { theme:"D", level:2, type:"qcm", options:["L'Assistant","Cortana","Bixby","Alexa"], correctIndex:0, statement:"Comment s'appelle l'assistant d'IA souverain déployé par l'État français ?", comment:"« L'Assistant », opéré par la DINUM. Il permet de dialoguer avec une IA dans un espace sécurisé, sans que les données servent à entraîner quoi que ce soit.", anec:"Son nom a été choisi par un vote des agents qui l'ont testé — il s'appelait d'abord « Assistant IA »." },
   { theme:"D", level:3, type:"qcm", options:["Oui, depuis le début","Pas encore, une ouverture est envisagée vers 2027","Non, et ce ne sera jamais le cas","Seulement aux régions"], correctIndex:1, statement:"« L'Assistant » de l'État est-il déjà accessible aux agents des collectivités territoriales ?", comment:"Pas encore. Il est pour l'instant réservé aux agents de l'État ; l'ouverture aux collectivités est envisagée pour 2027.", anec:"En attendant, les collectivités s'équipent via d'autres solutions souveraines (Le Chat de Mistral, ou des acteurs européens hébergés en France).", link:{ url:"https://ia.numerique.gouv.fr", label:"ia.numerique.gouv.fr" } },
-  { theme:"D", level:3, type:"qcm", options:["SecNumCloud","Le Wi-Fi","Le Bluetooth","Le HDMI"], correctIndex:0, statement:"Quel label garantit qu'un hébergement de données publiques est hautement sécurisé et souverain en France ?", comment:"SecNumCloud, une qualification délivrée par l'État. Elle garantit que les données restent en France, protégées d'un accès étranger.", anec:"C'est ce type d'hébergement qui permet à « L'Assistant » de l'État de traiter des documents internes en toute confiance." }
+  { theme:"D", level:3, type:"qcm", options:["SecNumCloud","Le Wi-Fi","Le Bluetooth","Le HDMI"], correctIndex:0, statement:"Quel label garantit qu'un hébergement de données publiques est hautement sécurisé et souverain en France ?", comment:"SecNumCloud, une qualification délivrée par l'État. Elle garantit que les données restent en France, protégées d'un accès étranger.", anec:"C'est ce type d'hébergement qui permet à « L'Assistant » de l'État de traiter des documents internes en toute confiance." },
+
+  /* ===== Cartes « autres types » : relier / sélectionner / nuage de mots ===== */
+  { theme:"H", level:2, type:"match", pairs:{ "Conférence de Dartmouth":"1956", "Deep Blue bat Kasparov":"1997", "Siri arrive sur iPhone":"2011", "Lancement de ChatGPT":"2022" }, statement:"Reliez chaque grande étape de l'IA à son année.", comment:"Dartmouth 1956 (naissance du terme), Deep Blue 1997 (échecs), Siri 2011, ChatGPT 2022.", anec:"Entre Dartmouth et ChatGPT, 66 ans se sont écoulés : l'IA a connu des périodes d'enthousiasme et de doute, surnommées les « hivers de l'IA »." },
+  { theme:"P", level:3, type:"match", pairs:{ "OpenAI":"ChatGPT", "Google":"Gemini", "Mistral":"Le Chat", "Anthropic":"Claude" }, statement:"Reliez chaque entreprise à son intelligence artificielle.", comment:"OpenAI (ChatGPT), Google (Gemini), la française Mistral (Le Chat) et Anthropic (Claude).", anec:"Le marché de l'IA générative est mondial : chaque grand acteur a son assistant, avec un seul champion européen, Mistral.", link:{ url:"https://mistral.ai", label:"Mistral AI" } },
+  { theme:"S", level:2, type:"select", options:["Anonymiser les données avant de les soumettre","Coller le dossier complet d'un administré","Relire et vérifier la réponse produite","Réserver un outil validé aux données sensibles","Y enregistrer ses mots de passe"], correct:[0,2,3], statement:"Sélectionnez TOUTES les bonnes pratiques avec une IA grand public.", comment:"Anonymiser, relire et vérifier, et réserver les données sensibles à un outil validé. Jamais de dossier nominatif ni de mot de passe.", anec:"La CNIL le résume ainsi : une IA grand public n'est pas un coffre-fort — on n'y met que ce qui pourrait être public.", link:{ url:CNIL, label:"CNIL & IA" } },
+  { theme:"C", level:1, type:"select", options:["Rédiger un brouillon de courrier","Résumer un rapport","Traduire une note","Décider seule d'une sanction disciplinaire"], correct:[0,1,2], statement:"Sélectionnez les tâches où une IA peut utilement aider un agent.", comment:"L'IA assiste (rédiger, résumer, traduire) mais ne décide jamais à la place de l'humain, surtout pour une décision engageant l'administration.", anec:"Règle simple : l'IA propose, l'agent dispose. La décision reste toujours humaine." },
+  { theme:"M", level:1, type:"cloud", options:["ChatGPT","Gemini","Le Chat","Claude","Excel","Photoshop","Windows"], correct:[0,1,2,3], statement:"Dans ce nuage, cliquez les mots qui désignent des IA génératives.", comment:"ChatGPT, Gemini, Le Chat et Claude sont des IA génératives. Excel, Photoshop et Windows sont des logiciels classiques.", anec:"Astuce : une IA générative crée du contenu nouveau à la demande ; un logiciel classique exécute des fonctions fixes." },
+  { theme:"D", level:3, type:"cloud", options:["SecNumCloud","Hébergement en France","L'Assistant","ChatGPT gratuit pour données sensibles","Cloud Act"], correct:[0,1,2], statement:"Cliquez les mots associés à un usage SÛR et souverain de l'IA.", comment:"Souveraineté = hébergement en France, label SecNumCloud, outils validés comme « L'Assistant ». À éviter : outils grand public pour données sensibles, exposés au Cloud Act.", anec:"Le bon réflexe : pour les données des administrés, on choisit un outil hébergé en France et qualifié par l'État.", link:{ url:"https://ia.numerique.gouv.fr", label:"ia.numerique.gouv.fr" } }
 ];
 
 /* ================= PLATEAU (circuit de 20 cases) ================= */
@@ -363,15 +397,17 @@ const BOARD = [
   { kind:"surprise" },
   { kind:"double" }
 ];
-const MAX_ROLLS = 10;
+const MAX_Q = 10;   // 10 questions par manche (les cases spéciales ne comptent PAS)
 const GOAL = 10;
+const TYPE_LABELS = { tf:"Vrai ou Faux", qcm:"Choix multiple", select:"Sélection multiple", cloud:"Nuage de mots", match:"Relier" };
 
 /* ================= ÉTAT ================= */
 const state = {
   teamName: "Équipe A",
   nextLetter: 0,
   pos: 0,
-  rolls: 0,
+  rolls: 0,       // nombre total de lancés (affiché à titre indicatif)
+  questions: 0,   // nombre de questions RÉELLEMENT posées (limite = 10)
   score: 0,
   used: new Set(),
   doubleNext: false,
@@ -396,6 +432,7 @@ function showScreen(name) {
 function escapeHtml(str){ return String(str).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 function nextLetterName(idx){ let s=""; idx+=1; while(idx>0){ idx--; s=String.fromCharCode(65+(idx%26))+s; idx=Math.floor(idx/26); } return "Équipe "+s; }
 function randInt(n){ return Math.floor(Math.random()*n); }
+function cssEscape(s){ return String(s).replace(/["\\]/g,"\\$&"); }
 
 /* ================= ACCUEIL ================= */
 function renderLegend(){
@@ -421,7 +458,7 @@ function recapTableHTML(hi){
 /* ================= DÉMARRAGE ================= */
 function startRound(){
   state.teamName = $("teamName").value.trim() || state.teamName;
-  state.pos=0; state.rolls=0; state.score=0; state.used=new Set();
+  state.pos=0; state.rolls=0; state.questions=0; state.score=0; state.used=new Set();
   state.doubleNext=false; state.hintNext=false; state.curCard=null; state.answered=false;
   buildBoard();
   updateHeader();
@@ -477,7 +514,7 @@ function highlightPawn(hop){
 }
 function updateHeader(){
   $("g-team").textContent = state.teamName;
-  $("g-roll").textContent = state.rolls;
+  $("g-roll").textContent = state.questions;
   $("g-score").textContent = state.score;
 }
 function bumpScore(){
@@ -493,10 +530,10 @@ function renderCenter(mode){
   const c = $("center-panel");
   if (!c) return;
   if (mode==="roll"){
-    const last = state.rolls >= MAX_ROLLS;
+    const last = state.questions >= MAX_Q;
     c.innerHTML = `
       <div class="dice" id="dice">🎲</div>
-      <div class="center-status" id="center-status">${last ? "10 lancés joués !" : "À vous de jouer, "+escapeHtml(state.teamName)+" !"}</div>
+      <div class="center-status" id="center-status">${last ? "10 questions jouées !" : "À vous de jouer, "+escapeHtml(state.teamName)+" !"}</div>
       <button class="btn btn--orange btn--big" id="btn-roll">${last ? "Voir le résultat ▶" : "Lancer le dé 🎲"}</button>`;
     $("btn-roll").addEventListener("click", last ? finishRound : rollDice);
   }
@@ -504,7 +541,7 @@ function renderCenter(mode){
 
 /* ---------- Lancer le dé ---------- */
 function rollDice(){
-  if (state.rolls >= MAX_ROLLS){ finishRound(); return; }
+  if (state.questions >= MAX_Q){ finishRound(); return; }
   const btn = $("btn-roll"); if (btn) btn.disabled = true;
   const result = 1 + randInt(6);
   const dice = $("dice");
@@ -514,7 +551,6 @@ function rollDice(){
     dice.textContent = DICE[result];
     status.innerHTML = `Vous avancez de <b>${result}</b> case${result>1?"s":""} !`;
     state.rolls++;
-    updateHeader();
     stepPawn(result, () => resolveLanding());
   };
   if (reduceMotion){ finalize(); return; }
@@ -555,9 +591,10 @@ function showModal(html){ $("modal-box").innerHTML = html; $("modal").classList.
 function hideModal(){ $("modal").classList.remove("show"); }
 
 function afterTurn(){
+  // Cases spéciales (bonus, double, coup de pouce, départ) : PAS de question consommée.
+  // On revient au plateau pour relancer le dé (question suivante).
   hideModal();
-  if (state.rolls >= MAX_ROLLS) { renderCenter("roll"); /* bouton devient "Voir le résultat" */ }
-  else renderCenter("roll");
+  renderCenter("roll");
 }
 
 /* ---------- Cases spéciales ---------- */
@@ -627,6 +664,8 @@ function startCard(theme, level){
   state.curDouble = state.doubleNext; state.doubleNext = false;
   state.curWager = LEVEL_PTS[level] * (state.curDouble ? 2 : 1);
   state.answered = false; state.preScore = state.score;
+  state.questions++;          // une vraie question = elle compte dans les 10
+  updateHeader();
   renderCard();
   showScreen("card");
 }
@@ -636,7 +675,7 @@ function renderCard(){
   $("card-head").style.background = t.color;
   $("ch-theme").textContent = t.name;
   $("ch-diff").textContent = LEVEL_LABEL[state.curLevel] + " · " + state.curWager + " pt" + (state.curWager>1?"s":"") + (state.curDouble?" (×2)":"");
-  $("card-type").textContent = card.type === "tf" ? "Vrai ou Faux" : "Choix multiple";
+  $("card-type").textContent = TYPE_LABELS[card.type] || "Question";
   $("card-statement").textContent = card.statement;
   $("card-explain").classList.remove("show");
   $("btn-continue").disabled = true;
@@ -644,7 +683,9 @@ function renderCard(){
 
   const zone = $("card-answers"); zone.innerHTML = "";
   if (card.type === "tf") renderTF(card, zone);
-  else renderQCM(card, zone);
+  else if (card.type === "qcm") renderQCM(card, zone);
+  else if (card.type === "select" || card.type === "cloud") renderSelect(card, zone, card.type === "cloud");
+  else if (card.type === "match") renderMatch(card, zone);
 }
 
 function renderTF(card, zone){
@@ -693,6 +734,102 @@ function renderQCM(card, zone){
   }));
 }
 
+/* ---------- Sélection multiple & nuage de mots ---------- */
+function renderSelect(card, zone, isCloud){
+  const sel = new Set();
+  const hint = document.createElement("p");
+  hint.className = "sel-hint";
+  hint.textContent = isCloud ? "Cliquez TOUS les bons mots, puis validez." : "Sélectionnez TOUTES les bonnes réponses, puis validez.";
+  const wrap = document.createElement("div");
+  wrap.className = isCloud ? "cloud-wrap" : "select-grid";
+  const sizes = ["cz-l", "cz-m", "cz-s"];
+  card.options.forEach((o, idx) => {
+    const b = document.createElement("button");
+    b.className = isCloud ? ("cloud-chip " + sizes[(idx * 5) % 3]) : "sel-btn";
+    b.dataset.idx = idx;
+    b.textContent = o;
+    b.addEventListener("click", () => {
+      if (state.answered) return;
+      if (sel.has(idx)) { sel.delete(idx); b.classList.remove("selected"); }
+      else { sel.add(idx); b.classList.add("selected"); }
+    });
+    wrap.appendChild(b);
+  });
+  const row = document.createElement("div");
+  row.className = "btn-row"; row.style.marginTop = "18px";
+  const val = document.createElement("button");
+  val.className = "btn btn--primary"; val.textContent = "Valider";
+  row.appendChild(val);
+  zone.appendChild(hint); zone.appendChild(wrap); zone.appendChild(row);
+
+  val.addEventListener("click", () => {
+    if (state.answered) return;
+    const correct = new Set(card.correct);
+    const ok = sel.size === correct.size && [...sel].every(i => correct.has(i));
+    wrap.querySelectorAll("button").forEach(b => {
+      b.disabled = true;
+      const i = parseInt(b.dataset.idx, 10);
+      if (correct.has(i)) { b.classList.add("answer-correct"); b.insertAdjacentHTML("beforeend", " ✓"); }
+      else if (sel.has(i)) { b.classList.add("answer-wrong"); b.insertAdjacentHTML("beforeend", " ✗"); }
+    });
+    val.disabled = true;
+    finishCard(ok);
+  });
+}
+
+/* ---------- Relier ---------- */
+function renderMatch(card, zone){
+  const lefts = Object.keys(card.pairs);
+  const rights = Object.values(card.pairs).slice();
+  for (let i = rights.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = rights[i]; rights[i] = rights[j]; rights[j] = t; }
+  let selLeft = null; const chosen = {};
+  zone.innerHTML = `<p class="sel-hint">Cliquez un élément à gauche, puis son correspondant à droite. Puis validez.</p>
+    <div class="match-wrap"><div class="match-col" id="mc-left"></div><div class="match-col" id="mc-right"></div></div>
+    <div class="btn-row" style="margin-top:18px"><button class="btn btn--primary" id="btn-validate" disabled>Valider</button></div>`;
+  const L = zone.querySelector("#mc-left"), R = zone.querySelector("#mc-right");
+  lefts.forEach(l => { const b = document.createElement("button"); b.className = "match-item"; b.dataset.side = "left"; b.dataset.val = l; b.textContent = l; L.appendChild(b); });
+  rights.forEach(r => { const b = document.createElement("button"); b.className = "match-item"; b.dataset.side = "right"; b.dataset.val = r; b.textContent = r; R.appendChild(b); });
+
+  function refresh(){
+    zone.querySelectorAll(".match-item").forEach(el => { el.classList.remove("paired", "selected"); const bd = el.querySelector(".pair-badge"); if (bd) bd.remove(); });
+    for (const l in chosen) {
+      const num = lefts.indexOf(l) + 1;
+      const le = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+      const re = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen[l])}"]`);
+      if (le) { le.classList.add("paired"); le.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+      if (re) { re.classList.add("paired"); re.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+    }
+    zone.querySelector("#btn-validate").disabled = Object.keys(chosen).length !== lefts.length;
+  }
+  zone.querySelectorAll(".match-item").forEach(item => item.addEventListener("click", () => {
+    if (state.answered) return;
+    const side = item.dataset.side, val = item.dataset.val;
+    if (side === "left") {
+      zone.querySelectorAll('[data-side="left"]').forEach(e => e.classList.remove("selected"));
+      if (selLeft === val) { selLeft = null; return; }
+      selLeft = val; item.classList.add("selected");
+    } else {
+      if (!selLeft) return;
+      for (const l in chosen) { if (chosen[l] === val) delete chosen[l]; }
+      chosen[selLeft] = val; selLeft = null; refresh();
+    }
+  }));
+  zone.querySelector("#btn-validate").addEventListener("click", () => {
+    if (state.answered) return;
+    let ok = true;
+    lefts.forEach(l => {
+      const good = card.pairs[l] === chosen[l];
+      const le = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+      const re = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen[l])}"]`);
+      if (good) { if (le) le.classList.add("pair-ok"); if (re) re.classList.add("pair-ok"); }
+      else { ok = false; if (le) le.classList.add("pair-ko"); if (re) re.classList.add("pair-ko"); }
+    });
+    zone.querySelectorAll(".match-item").forEach(e => e.disabled = true);
+    zone.querySelector("#btn-validate").disabled = true;
+    finishCard(ok);
+  });
+}
+
 function finishCard(ok){
   state.answered = true;
   let gained = 0;
@@ -728,8 +865,7 @@ function continueAfterCard(){
   if (!state.answered) return;
   state.curCard = null;
   showScreen("board");
-  if (state.rolls >= MAX_ROLLS) renderCenter("roll");
-  else renderCenter("roll");
+  renderCenter("roll"); // affiche "Voir le résultat" si les 10 questions sont faites
 }
 
 /* ================= FINAL ================= */
