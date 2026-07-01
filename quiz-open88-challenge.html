@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz OPEN 88 — Défi IA (mode progressif)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cdg-bleu:       #272A5F;
+  --cdg-bleu-dark:  #1B1E45;
+  --cdg-bleu-10:    #EAEAF3;
+  --cdg-rose:       #E94059;
+  --cdg-rose-dark:  #C42E46;
+  --cdg-orange:     #F7A720;
+  --cdg-orange-dark:#D4880A;
+  --cdg-white:      #FFFFFF;
+  --cdg-gray-50:    #F8F8F8;
+  --cdg-gray-200:   #E5E5E5;
+  --cdg-gray-500:   #888888;
+  --cdg-gray-800:   #222222;
+  --font-main: 'Barlow', 'Calibri', Arial, sans-serif;
+  --shadow-md: 0 4px 16px rgba(39,42,95,0.12);
+  --shadow-lg: 0 8px 32px rgba(39,42,95,0.15);
+  --transition-base: 0.2s ease;
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-fade: ease-in-out;
+  --vert:      #1E9E5A;
+  --vert-bg:   #E4F5EC;
+  --rouge-bg:  #FCE8EC;
+
+  /* Couleurs par niveau (rang du joueur) */
+  --lvl-color: #272A5F;   /* défaut = niveau 1 (bleu) */
+  --accent:    #E94059;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-main);
+  color: var(--cdg-gray-800);
+  background: var(--cdg-bleu);
+}
+body { font-size: clamp(16px, 1.4vw, 22px); line-height: 1.4; overflow-x: hidden; }
+button { font-family: var(--font-main); cursor: pointer; border: none; }
+
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+.screen { display: none; flex: 1; flex-direction: column; min-height: 100vh; }
+.screen.active { display: flex; }
+
+/* ================= ANIMATIONS ================= */
+@media (prefers-reduced-motion: no-preference) {
+  .screen.active { animation: fadeSlide 0.35s ease; }
+  @keyframes fadeSlide { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.92) translateY(14px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @keyframes scorePop { 0% { transform: scale(1); } 35% { transform: scale(1.45); } 100% { transform: scale(1); } }
+  @keyframes correctGlow { 0% { box-shadow: 0 0 0 0 rgba(30,158,90,0.55); } 100% { box-shadow: 0 0 0 22px rgba(30,158,90,0); } }
+  @keyframes shake { 10%,90% { transform: translateX(-2px); } 20%,80% { transform: translateX(4px); } 30%,50%,70% { transform: translateX(-9px); } 40%,60% { transform: translateX(9px); } }
+  @keyframes badgePop { 0% { opacity: 0; transform: scale(0.4) rotate(-6deg); } 60% { opacity: 1; transform: scale(1.12) rotate(2deg); } 100% { transform: scale(1) rotate(0); } }
+  @keyframes titleRise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes decoWipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes confettiFall { 0% { transform: translateY(-12vh) rotate(0); opacity: 1; } 100% { transform: translateY(105vh) rotate(720deg); opacity: 0.9; } }
+  @keyframes flicker { from { transform: scaleY(0.82) scaleX(1.02); opacity: 0.82; } to { transform: scaleY(1.18) scaleX(0.9); opacity: 1; } }
+  @keyframes emberRise { 0% { transform: translateY(0) scale(1); opacity: 0.9; } 100% { transform: translateY(-70px) scale(0.3); opacity: 0; } }
+  @keyframes loZoom { 0% { opacity: 0; transform: scale(0.3); } 55% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes glowPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+
+  .anim-statement { animation: popIn 0.5s var(--spring) both; }
+  .anim-title { animation: titleRise 0.6s var(--ease-fade) both; }
+  .anim-title-2 { animation: titleRise 0.6s 0.12s var(--ease-fade) both; }
+  .anim-title-3 { animation: titleRise 0.6s 0.22s var(--ease-fade) both; }
+  .deco-bar { transform-origin: left; animation: decoWipe 0.5s var(--spring) both; }
+  .tf-btn, .mc-btn { animation: popIn 0.5s var(--spring) both; }
+  .tf-btn:nth-of-type(1) { animation-delay: 0.06s; }
+  .tf-btn:nth-of-type(2) { animation-delay: 0.14s; }
+  .mc-btn:nth-of-type(1) { animation-delay: 0.06s; }
+  .mc-btn:nth-of-type(2) { animation-delay: 0.14s; }
+  .mc-btn:nth-of-type(3) { animation-delay: 0.22s; }
+  .mc-btn:nth-of-type(4) { animation-delay: 0.30s; }
+  .q-score-box.bump #q-score { display: inline-block; animation: scorePop 0.5s ease; }
+  .answer-correct.glow { animation: correctGlow 0.7s ease-out; }
+  .answer-wrong.shake { animation: shake 0.5s ease; }
+  .final-score { animation: popIn 0.6s 0.1s var(--spring) both; }
+  .badge-win, .badge-encourage { animation: badgePop 0.6s 0.55s ease both; }
+  #levelup-overlay.show .lo-inner { animation: loZoom 0.6s var(--spring) both; }
+  .q-body.lvl3 { animation: glowPulse 2.4s ease-in-out infinite; }
+}
+
+/* ---------- Blue screens ---------- */
+.screen--blue {
+  background: radial-gradient(120% 120% at 80% 0%, #30346f 0%, var(--cdg-bleu) 55%, var(--cdg-bleu-dark) 100%);
+  color: var(--cdg-white); position: relative; overflow: hidden;
+}
+.screen--dark { background: radial-gradient(120% 120% at 20% 0%, #24285a 0%, var(--cdg-bleu-dark) 60%, #14163a 100%); }
+
+.watermark { position: absolute; bottom: -6vw; right: 2vw; font-size: 42vw; font-weight: 700; color: rgba(255,255,255,0.04); line-height: 1; pointer-events: none; user-select: none; z-index: 0; }
+
+.blue-content { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 4vh 5vw; gap: 2.2vh; }
+
+.deco-bar { height: 10px; width: 220px; background: linear-gradient(90deg, var(--cdg-rose) 33%, var(--cdg-orange) 33%); }
+
+.brand-tag { display: inline-block; background: var(--cdg-rose); color: var(--cdg-white); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; font-size: clamp(13px, 1vw, 18px); padding: 6px 16px; }
+
+h1.title { font-size: clamp(32px, 5.2vw, 84px); font-weight: 700; line-height: 1.05; color: var(--cdg-white); max-width: 20ch; }
+.subtitle { font-size: clamp(18px, 2.2vw, 34px); font-weight: 500; color: var(--cdg-orange); max-width: 34ch; }
+
+.rules {
+  display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-top: 1vh;
+}
+.rule-chip {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+  padding: 12px 20px; font-size: clamp(14px, 1.2vw, 20px); font-weight: 500;
+  display: flex; align-items: center; gap: 10px;
+}
+.rule-chip b { color: var(--cdg-orange); }
+.rule-lvl1 b { color: #8fa0ff; }
+.rule-lvl2 b { color: var(--cdg-orange); }
+.rule-lvl3 b { color: #ff8a5c; }
+
+/* ---------- Inputs / Buttons ---------- */
+.group-input-wrap { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 1vh; }
+.group-input-wrap label { font-size: clamp(15px, 1.3vw, 22px); color: var(--cdg-white); font-weight: 500; }
+input.group-input { border-radius: 0; border: 3px solid var(--cdg-orange); background: var(--cdg-white); color: var(--cdg-gray-800); font-size: clamp(20px, 2vw, 30px); font-weight: 600; padding: 12px 20px; text-align: center; width: min(90vw, 460px); outline: none; transition: border-color var(--transition-base), box-shadow var(--transition-base); }
+input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px rgba(233,64,89,0.25); }
+
+.btn { border-radius: 0; font-weight: 600; font-size: clamp(17px, 1.6vw, 26px); padding: 16px 34px; color: var(--cdg-white); background: var(--cdg-bleu); transition: background var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base); box-shadow: var(--shadow-md); }
+.btn:hover:not(:disabled) { background: var(--cdg-bleu-dark); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn--orange { background: var(--cdg-orange); color: var(--cdg-bleu-dark); }
+.btn--orange:hover:not(:disabled) { background: var(--cdg-orange-dark); }
+.btn--secondary { background: var(--cdg-rose); }
+.btn--secondary:hover:not(:disabled) { background: var(--cdg-rose-dark); }
+.btn--ghost { background: transparent; color: var(--cdg-gray-500); box-shadow: none; border: 2px solid var(--cdg-gray-200); font-size: clamp(14px, 1.2vw, 19px); padding: 12px 22px; }
+.btn--ghost:hover:not(:disabled) { background: var(--cdg-gray-50); color: var(--cdg-gray-800); transform: translateY(-2px); }
+.btn--big { font-size: clamp(20px, 2.2vw, 34px); padding: 20px 48px; }
+.btn-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+/* ---------- Recap table ---------- */
+.recap { width: min(92vw, 820px); margin-top: 2vh; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); padding: 18px 22px; }
+.recap h3 { color: var(--cdg-orange); font-size: clamp(16px, 1.4vw, 24px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.recap table { width: 100%; border-collapse: collapse; color: var(--cdg-white); }
+.recap th, .recap td { text-align: left; padding: 10px 8px; font-size: clamp(14px, 1.2vw, 20px); border-bottom: 1px solid rgba(255,255,255,0.12); }
+.recap th { color: var(--cdg-orange); font-weight: 600; text-transform: uppercase; font-size: clamp(12px, 1vw, 16px); letter-spacing: 0.05em; }
+.recap td.score { font-weight: 700; }
+.recap .win { color: var(--cdg-orange); }
+.recap tr.just-played td { background: rgba(247,167,32,0.12); }
+
+/* ---------- Question screen ---------- */
+#screen-question.lvl1 { --lvl-color: #272A5F; --accent: #E94059; }
+#screen-question.lvl2 { --lvl-color: #F7A720; --accent: #F7A720; }
+#screen-question.lvl3 { --lvl-color: #E94059; --accent: #C42E46; }
+
+.q-header { background: var(--cdg-bleu); color: var(--cdg-white); border-bottom: 5px solid var(--accent); padding: 16px clamp(20px, 4vw, 60px); display: flex; flex-direction: column; gap: 12px; transition: border-color 0.4s ease; }
+.q-header-top { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+.q-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.q-group-name { font-weight: 700; font-size: clamp(17px, 1.6vw, 26px); }
+
+.level-badge {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--lvl-color); color: #fff; font-weight: 700;
+  padding: 6px 16px; font-size: clamp(14px, 1.3vw, 22px);
+  transition: background 0.4s ease;
+}
+#screen-question.lvl2 .level-badge { color: var(--cdg-bleu-dark); }
+.level-badge .mult { background: rgba(255,255,255,0.25); padding: 2px 10px; border-radius: 9999px; font-size: 0.85em; }
+#screen-question.lvl2 .level-badge .mult { background: rgba(39,42,95,0.2); }
+
+.q-score-box { font-weight: 700; font-size: clamp(22px, 2.4vw, 40px); color: var(--cdg-white); background: var(--cdg-bleu-dark); padding: 6px 20px; border-left: 5px solid var(--cdg-orange); }
+.q-score-box span { color: var(--cdg-orange); }
+
+.q-meta-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: clamp(14px, 1.3vw, 21px); }
+.q-counter { font-weight: 500; color: var(--cdg-orange); }
+.streak { display: flex; align-items: center; gap: 10px; font-weight: 500; color: rgba(255,255,255,0.9); }
+.streak-dots { display: inline-flex; gap: 6px; }
+.streak-dot { width: 16px; height: 16px; border-radius: 9999px; border: 2px solid var(--cdg-orange); }
+.streak-dot.on { background: var(--cdg-orange); }
+.streak.max { color: #ff8a5c; font-weight: 700; }
+
+.progress { height: 12px; width: 100%; background: rgba(255,255,255,0.18); border-radius: 9999px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--cdg-rose), var(--cdg-orange)); border-radius: 9999px; transition: width 0.4s ease; }
+
+.q-body {
+  flex: 1; background: var(--cdg-white); position: relative;
+  padding: clamp(28px, 5vh, 72px) clamp(20px, 5vw, 90px);
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  text-align: center; gap: clamp(28px, 5vh, 64px); overflow: hidden;
+  transition: background 0.4s ease;
+}
+.q-body.lvl3 { background: radial-gradient(circle at 50% 125%, rgba(247,167,32,0.20), rgba(233,64,89,0.06) 40%, #ffffff 72%); }
+
+.q-type-tag { display: inline-block; align-self: center; font-size: clamp(12px, 1vw, 16px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); border: 2px solid var(--accent); padding: 3px 12px; position: relative; z-index: 3; }
+.q-statement { font-size: clamp(26px, 3.2vw, 52px); font-weight: 600; line-height: 1.25; color: var(--cdg-bleu); max-width: 30ch; margin: 0 auto; position: relative; z-index: 3; }
+
+#q-answer-zone { width: 100%; max-width: 1200px; margin: 0 auto; position: relative; z-index: 3; }
+
+.tf-buttons { display: flex; gap: clamp(16px, 3vw, 40px); flex-wrap: wrap; }
+.tf-btn { border-radius: 0; flex: 1 1 300px; min-height: clamp(120px, 22vh, 220px); font-size: clamp(30px, 4vw, 64px); font-weight: 700; background: var(--cdg-white); color: var(--cdg-bleu); border: 4px solid var(--cdg-bleu); transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base); display: flex; align-items: center; justify-content: center; gap: 16px; }
+.tf-btn:hover:not(:disabled) { background: var(--cdg-bleu-10); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.tf-btn:disabled { cursor: default; }
+
+.mc-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(16px, 2vw, 30px); width: 100%; }
+@media (max-width: 760px) { .mc-options { grid-template-columns: 1fr; } }
+.mc-btn { border-radius: 0; border: 4px solid var(--cdg-bleu); background: var(--cdg-white); color: var(--cdg-bleu); font-size: clamp(19px, 2vw, 30px); font-weight: 600; padding: 24px 24px; text-align: left; transition: background var(--transition-base), color var(--transition-base), border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base); min-height: 100px; display: flex; align-items: center; gap: 16px; }
+.mc-btn:hover:not(:disabled) { background: var(--cdg-bleu-10); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.mc-btn .mc-key { flex: 0 0 auto; width: clamp(38px, 3vw, 52px); height: clamp(38px, 3vw, 52px); background: var(--cdg-bleu); color: var(--cdg-white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: clamp(18px, 1.8vw, 26px); }
+
+.answer-correct { background: var(--vert-bg) !important; border-color: var(--vert) !important; color: var(--vert) !important; }
+.answer-correct .mc-key { background: var(--vert) !important; }
+.answer-wrong { background: var(--rouge-bg) !important; border-color: var(--cdg-rose) !important; color: var(--cdg-rose-dark) !important; }
+.answer-wrong .mc-key { background: var(--cdg-rose) !important; }
+
+.explain { border-left: 6px solid var(--cdg-orange); background: var(--cdg-gray-50); padding: 20px 26px; font-size: clamp(17px, 1.7vw, 26px); line-height: 1.45; display: none; width: 100%; max-width: 1000px; margin: 0 auto; text-align: left; position: relative; z-index: 3; }
+.explain.show { display: block; }
+@media (prefers-reduced-motion: no-preference) { .explain.show { animation: fadeSlide 0.35s ease; } }
+.explain .verdict { font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+.explain .verdict.ok { color: var(--vert); }
+.explain .verdict.ko { color: var(--cdg-rose-dark); }
+.explain .pts { font-weight: 700; color: var(--cdg-bleu); }
+.explain a { color: var(--cdg-bleu); font-weight: 700; text-decoration: underline; display: inline-block; margin-top: 12px; }
+.explain a:hover { color: var(--cdg-rose); }
+
+.q-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px clamp(20px, 5vw, 90px); background: var(--cdg-white); border-top: 1px solid var(--cdg-gray-200); flex-wrap: wrap; }
+
+/* ---------- Flames (niveau 3) ---------- */
+.flames { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; display: none; justify-content: center; align-items: flex-end; gap: 8px; pointer-events: none; z-index: 1; }
+.q-body.lvl3 .flames { display: flex; }
+.flame { width: 34px; height: 74px; background: linear-gradient(to top, #F7A720 0%, #E94059 55%, rgba(233,64,89,0) 100%); border-radius: 50% 50% 42% 42% / 62% 62% 40% 40%; filter: blur(2px); transform-origin: bottom center; }
+@media (prefers-reduced-motion: no-preference) {
+  .flame { animation: flicker 0.5s ease-in-out infinite alternate; }
+  .flame:nth-child(2n) { animation-duration: 0.62s; height: 96px; }
+  .flame:nth-child(3n) { animation-duration: 0.44s; height: 60px; }
+  .flame:nth-child(5n) { animation-duration: 0.7s; height: 108px; }
+}
+
+/* ---------- Level-up overlay ---------- */
+#levelup-overlay { position: fixed; inset: 0; z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; text-align: center; overflow: hidden; }
+#levelup-overlay.show { display: flex; }
+#levelup-overlay.lvl2 { background: radial-gradient(circle at 50% 40%, #F7A720, #D4880A 70%, #8a5806); }
+#levelup-overlay.lvl3 { background: radial-gradient(circle at 50% 40%, #F7A720, #E94059 55%, #7a1224); }
+.lo-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 1.4vh; }
+.lo-flash { font-size: clamp(18px, 2vw, 30px); font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.9; }
+.lo-level { font-size: clamp(56px, 12vw, 170px); font-weight: 700; line-height: 1; text-shadow: 0 6px 30px rgba(0,0,0,0.3); }
+.lo-name { font-size: clamp(24px, 4vw, 56px); font-weight: 700; }
+.lo-mult { font-size: clamp(26px, 4.5vw, 64px); font-weight: 700; background: rgba(0,0,0,0.22); padding: 8px 28px; margin-top: 1vh; }
+.lo-flames { position: absolute; left: 0; right: 0; bottom: -10px; height: 32vh; display: flex; justify-content: center; align-items: flex-end; gap: 12px; z-index: 1; pointer-events: none; }
+.lo-flames .flame { width: 56px; height: 40vh; filter: blur(6px); }
+
+/* ---------- Final screen ---------- */
+.final-score { font-size: clamp(56px, 11vw, 160px); font-weight: 700; color: var(--cdg-white); line-height: 1; }
+.final-score .unit { color: var(--cdg-orange); font-size: 0.4em; }
+.final-label { font-size: clamp(20px, 2.4vw, 38px); font-weight: 500; color: var(--cdg-orange); }
+.final-detail { font-size: clamp(18px, 1.9vw, 30px); color: var(--cdg-white); }
+.final-detail .hl { color: #ff8a5c; font-weight: 700; }
+.bonus-line { font-size: clamp(17px, 1.7vw, 26px); color: var(--cdg-white); }
+.bonus-line .yes { color: #64e6a0; font-weight: 700; }
+.bonus-line .no { color: var(--cdg-orange); font-weight: 700; }
+.badge-win { display: inline-flex; align-items: center; gap: 12px; background: var(--cdg-orange); color: var(--cdg-bleu-dark); font-size: clamp(22px, 2.6vw, 42px); font-weight: 700; padding: 16px 36px; border: 4px solid var(--cdg-white); text-transform: uppercase; letter-spacing: 0.03em; }
+.badge-encourage { font-size: clamp(20px, 2.2vw, 34px); font-weight: 600; color: var(--cdg-white); background: var(--cdg-rose); padding: 14px 32px; }
+
+.confetti-piece { position: fixed; top: -12vh; width: 12px; height: 18px; z-index: 60; pointer-events: none; will-change: transform; }
+.kbd-hint { position: fixed; bottom: 10px; left: 12px; font-size: 13px; color: var(--cdg-gray-500); background: rgba(255,255,255,0.85); padding: 4px 10px; z-index: 50; border: 1px solid var(--cdg-gray-200); }
+
+@media (max-width: 640px) { .q-header-top { flex-direction: column; align-items: flex-start; } .q-footer { justify-content: center; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ ACCUEIL ============ -->
+  <section class="screen screen--blue active" id="screen-home">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag anim-title">CDG 88 · Mode Défi 🔥</span>
+      <h1 class="title anim-title-2">Quiz OPEN 88 — Défi IA</h1>
+      <p class="subtitle anim-title-3">Plus vous enchaînez les bonnes réponses, plus les questions montent en niveau… et plus les points valent cher !</p>
+
+      <div class="rules">
+        <div class="rule-chip rule-lvl1">🟦 Niveau 1 · <b>1 pt</b></div>
+        <div class="rule-chip rule-lvl2">🟧 Niveau 2 · <b>2 pts</b></div>
+        <div class="rule-chip rule-lvl3">🟥 Niveau 3 · <b>3 pts</b> 🔥</div>
+        <div class="rule-chip">2 bonnes réponses de suite = <b>on monte !</b></div>
+        <div class="rule-chip rule-lvl3">🏆 Atteindre le <b>Niveau 3</b> = atelier validé <b>(+1 pt OPEN 88)</b></div>
+      </div>
+
+      <div class="group-input-wrap">
+        <label for="groupName">Nom du groupe qui va passer</label>
+        <input type="text" id="groupName" class="group-input" value="Groupe A" autocomplete="off">
+      </div>
+
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-start">Lancer le défi ▶</button>
+      </div>
+
+      <div class="recap" id="home-recap" style="display:none">
+        <h3>Manches déjà jouées</h3>
+        <div id="home-recap-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUESTION ============ -->
+  <section class="screen lvl1" id="screen-question">
+    <div class="q-header">
+      <div class="q-header-top">
+        <div class="q-left">
+          <div class="q-group-name" id="q-group"></div>
+          <div class="level-badge" id="q-level-badge"><span id="q-level-name">Niveau 1 · Découverte</span><span class="mult" id="q-mult">×1</span></div>
+        </div>
+        <div class="q-score-box" id="q-score-box">Points : <span id="q-score">0</span></div>
+      </div>
+      <div class="q-meta-row">
+        <div class="q-counter" id="q-counter">Question 1 / 10</div>
+        <div class="streak" id="q-streak"></div>
+      </div>
+      <div class="progress"><div class="progress-fill" id="q-progress"></div></div>
+    </div>
+
+    <div class="q-body lvl1" id="q-body">
+      <span class="q-type-tag" id="q-type-tag"></span>
+      <div class="q-statement" id="q-statement"></div>
+      <div id="q-answer-zone"></div>
+      <div class="explain" id="q-explain">
+        <span class="verdict" id="q-verdict"></span>
+        <span id="q-explain-text"></span>
+        <div id="q-link-wrap"></div>
+      </div>
+      <div class="flames" id="q-flames"></div>
+    </div>
+
+    <div class="q-footer">
+      <button class="btn btn--ghost" id="btn-redo" style="visibility:hidden">↻ Corriger la réponse</button>
+      <button class="btn btn--orange" id="btn-next" disabled>Question suivante ▶</button>
+    </div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section class="screen screen--blue screen--dark" id="screen-final">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">Résultat du défi</span>
+      <div class="final-label" id="final-group"></div>
+      <div class="final-score"><span id="final-pts">0</span> <span class="unit">points</span></div>
+      <div class="final-detail" id="final-detail"></div>
+      <div class="bonus-line" id="final-bonus"></div>
+      <div id="final-badge"></div>
+
+      <div class="recap" id="final-recap">
+        <h3>Récapitulatif des groupes</h3>
+        <div id="final-recap-body"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-newgroup">Nouveau groupe ▶</button>
+        <button class="btn btn--ghost" id="btn-reset" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3)">Tout réinitialiser</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Overlay de passage de niveau -->
+<div id="levelup-overlay">
+  <div class="lo-flames" id="lo-flames"></div>
+  <div class="lo-inner">
+    <div class="lo-flash">Niveau supérieur débloqué</div>
+    <div class="lo-level" id="lo-level">NIVEAU 2</div>
+    <div class="lo-name" id="lo-name">Confirmé</div>
+    <div class="lo-mult" id="lo-mult">Points × 2</div>
+  </div>
+</div>
+
+<div class="kbd-hint">→ Question suivante</div>
+
+<script>
+"use strict";
+
+/* ================= NIVEAUX ================= */
+const LEVELS = [
+  { n: 1, name: "Découverte", points: 1 },
+  { n: 2, name: "Confirmé",   points: 2 },
+  { n: 3, name: "Expert",     points: 3 }
+];
+
+/* ================= POOL DE QUESTIONS (par niveau) ================= */
+const POOL = [
+  /* ---- Niveau 1 : Découverte ---- */
+  {
+    level: 1, type: "tf",
+    statement: "ChatGPT peut se tromper et inventer des informations qui semblent pourtant vraies.",
+    correct: true, verdict: "Vrai",
+    explanation: "On appelle ça une « hallucination » : l'IA produit une réponse plausible, pas forcément exacte. Règle d'or : on vérifie toujours ce que produit une IA."
+  },
+  {
+    level: 1, type: "qcm",
+    statement: "Que veut dire l'abréviation « IA » ?",
+    options: ["Intelligence Artificielle", "Information Automatisée", "Interface Assistée", "Intelligence Assistée"],
+    correctIndex: 0,
+    explanation: "IA = Intelligence Artificielle : des programmes capables d'effectuer des tâches qui semblent nécessiter de l'« intelligence » (comprendre, reconnaître, décider)."
+  },
+  {
+    level: 1, type: "tf",
+    statement: "On peut utiliser une IA générative en écrivant en langage courant, sans savoir coder.",
+    correct: true, verdict: "Vrai",
+    explanation: "On dialogue avec l'IA comme dans une conversation normale. Aucune compétence technique n'est requise : l'IA est accessible à tout le monde."
+  },
+  {
+    level: 1, type: "qcm",
+    statement: "Parmi ces outils, lequel est une IA générative de conversation ?",
+    options: ["ChatGPT", "Un tableur Excel", "Un navigateur web", "Une calculatrice"],
+    correctIndex: 0,
+    explanation: "ChatGPT est une IA générative : elle produit du texte en dialoguant. Les autres sont des outils informatiques classiques, sans capacité d'« apprentissage »."
+  },
+
+  /* ---- Niveau 2 : Confirmé ---- */
+  {
+    level: 2, type: "tf",
+    statement: "Je peux saisir le nom et l'adresse d'un administré dans un ChatGPT gratuit.",
+    correct: false, verdict: "Faux",
+    explanation: "C'est le RGPD qui l'interdit : les données d'un administré ne doivent pas partir vers un outil grand public hébergé hors de l'UE et susceptible de les réutiliser. Réflexe : jamais de données nominatives dans un outil grand public.",
+    link: { url: "https://www.cnil.fr/fr/intelligence-artificielle", label: "En savoir plus — CNIL & IA" }
+  },
+  {
+    level: 2, type: "qcm",
+    statement: "Quel outil d'IA générative souverain l'État français a-t-il déployé pour ses agents ?",
+    options: ["« L'Assistant »", "Microsoft Copilot", "Google Gemini", "Alexa"],
+    correctIndex: 0,
+    explanation: "« L'Assistant », développé par la DINUM avec la française Mistral AI, hébergé en France. D'autres solutions souveraines existent pour les collectivités (Le Chat, API Albert…), recensées sur ia.numerique.gouv.fr.",
+    link: { url: "https://ia.numerique.gouv.fr", label: "Panorama des outils IA de l'État" }
+  },
+  {
+    level: 2, type: "tf",
+    statement: "La façon de formuler sa demande à une IA (le « prompt ») influence fortement la qualité de la réponse.",
+    correct: true, verdict: "Vrai",
+    explanation: "Une consigne claire, avec du contexte et un rôle précis, donne une bien meilleure réponse. C'est un vrai savoir-faire : le « prompting »."
+  },
+  {
+    level: 2, type: "qcm",
+    statement: "Quelle entreprise française est devenue la référence européenne de l'IA générative ?",
+    options: ["Mistral AI", "OpenAI", "Google", "Meta"],
+    correctIndex: 0,
+    explanation: "Mistral AI, fondée en 2023 par d'anciens chercheurs français. Ce sont ses modèles qui équipent « L'Assistant » de l'État. L'Europe est bien dans la course.",
+    link: { url: "https://mistral.ai", label: "Découvrir Mistral AI" }
+  },
+
+  /* ---- Niveau 3 : Expert ---- */
+  {
+    level: 3, type: "qcm",
+    statement: "En quelle année le terme « intelligence artificielle » a-t-il été créé ?",
+    options: ["1956", "1997", "2011", "2022"],
+    correctIndex: 0,
+    explanation: "1956, lors de la conférence de Dartmouth. 1997 : Deep Blue bat Kasparov aux échecs ; 2011 : Siri arrive sur iPhone ; 2022 : lancement de ChatGPT. L'IA a près de 70 ans."
+  },
+  {
+    level: 3, type: "qcm",
+    statement: "Quel règlement européen encadre spécifiquement l'intelligence artificielle depuis 2024 ?",
+    options: ["L'AI Act", "Le RGPD", "Le DSA", "Le DMA"],
+    correctIndex: 0,
+    explanation: "L'AI Act (règlement sur l'IA, en vigueur depuis août 2024). Piège fréquent : le RGPD encadre les données personnelles en général, mais ce n'est pas le texte spécifique à l'IA.",
+    link: { url: "https://www.cnil.fr/fr/intelligence-artificielle", label: "CNIL — cadre de l'IA" }
+  },
+  {
+    level: 3, type: "tf",
+    statement: "Une IA générative « comprend » réellement le sens des mots, exactement comme un humain.",
+    correct: false, verdict: "Faux",
+    explanation: "Elle calcule le mot le plus probable après le précédent, sans conscience du sens. Le site de l'État le rappelle : ce sont des « propositions probabilistes » qui peuvent contenir des erreurs."
+  },
+  {
+    level: 3, type: "qcm",
+    statement: "Comment appelle-t-on une réponse fausse mais crédible inventée par une IA ?",
+    options: ["Une hallucination", "Un bug", "Un virus", "Une mise à jour"],
+    correctIndex: 0,
+    explanation: "Une « hallucination ». L'IA peut inventer une source, une loi ou une jurisprudence d'apparence crédible. D'où l'importance de toujours vérifier."
+  },
+  {
+    level: 3, type: "tf",
+    statement: "Même si une IA rédige un courrier, la responsabilité de ce qui est transmis à l'usager reste entièrement humaine.",
+    correct: true, verdict: "Vrai",
+    explanation: "La responsabilité reste 100 % humaine : l'agent relit, corrige, vérifie et valide avant d'engager sa structure. L'IA propose, l'humain décide. Une IA ne porte aucune responsabilité juridique."
+  }
+];
+
+const BONUS = {
+  statement: "Question bonus 🤖 Selon vous, qui a créé ce quiz ?",
+  options: ["Un formateur du CDG88", "Une intelligence artificielle", "Un stagiaire", "Le service communication"],
+  correctIndex: 1,
+  reveal: "Surprise ! Ce quiz a été conçu avec l'aide d'une intelligence artificielle générative. Vous venez de jouer… en partie contre la machine ! 🤖"
+};
+
+const MANCHE_LENGTH = 10;    // nombre de questions par manche
+const VALIDATION_LEVEL = 3;  // niveau à atteindre pour VALIDER l'atelier (+1 pt OPEN 88)
+const TYPE_LABELS = { tf: "Vrai ou Faux", qcm: "Choix multiple" };
+
+/* ================= ÉTAT ================= */
+const state = {
+  groupName: "Groupe A",
+  nextGroupLetter: 0,
+  count: 0,        // questions servies (1..MANCHE_LENGTH)
+  score: 0,
+  level: 1,
+  streak: 0,
+  maxLevel: 1,
+  used: new Set(),
+  currentQ: null,
+  answered: false,
+  pre: null,       // snapshot avant réponse (pour correction)
+  pendingLevelUp: 0,
+  bonusAnswered: false,
+  bonusChosenIndex: null,
+  bonusCorrect: false,
+  history: []
+};
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+const screens = { home: $("screen-home"), question: $("screen-question"), final: $("screen-final") };
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[name].classList.add("active");
+  document.querySelector(".kbd-hint").style.display = (name === "question") ? "block" : "none";
+  window.scrollTo(0, 0);
+}
+
+/* Règle de validation de l'atelier : le groupe valide l'atelier (et remporte
+   le point OPEN 88) s'il atteint le Niveau 3 (Expert) pendant la manche. */
+function isValidated() { return state.maxLevel >= VALIDATION_LEVEL; }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function nextLetterName(idx) {
+  let s = ""; idx += 1;
+  while (idx > 0) { idx--; s = String.fromCharCode(65 + (idx % 26)) + s; idx = Math.floor(idx / 26); }
+  return "Groupe " + s;
+}
+
+/* ================= ACCUEIL ================= */
+function renderHome() {
+  $("groupName").value = state.groupName;
+  const recap = $("home-recap");
+  if (state.history.length > 0) { recap.style.display = "block"; $("home-recap-body").innerHTML = recapTableHTML(-1); }
+  else { recap.style.display = "none"; }
+  showScreen("home");
+}
+
+function recapTableHTML(highlightIdx) {
+  const rows = state.history.map((h, i) => {
+    const validated = h.level >= VALIDATION_LEVEL;
+    return `<tr class="${i === highlightIdx ? "just-played" : ""}">
+      <td>${i + 1}</td>
+      <td>${escapeHtml(h.name)}</td>
+      <td class="score">${h.score} pts</td>
+      <td>Niv. ${h.level}${h.level === 3 ? " 🔥" : ""}</td>
+      <td class="${validated ? "win" : ""}">${validated ? "✅ +1" : "—"}</td>
+      <td>${h.bonus ? "✓ +1" : "—"}</td>
+    </tr>`;
+  }).join("");
+  return `<table><thead><tr><th>#</th><th>Groupe</th><th>Score</th><th>Niveau max</th><th>OPEN 88</th><th>Bonus</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ================= DÉMARRAGE ================= */
+function startRound() {
+  state.groupName = $("groupName").value.trim() || state.groupName;
+  state.count = 0; state.score = 0; state.level = 1; state.streak = 0; state.maxLevel = 1;
+  state.used = new Set(); state.currentQ = null; state.answered = false; state.pre = null; state.pendingLevelUp = 0;
+  state.bonusAnswered = false; state.bonusChosenIndex = null; state.bonusCorrect = false;
+  buildFlames();
+  loadNextQuestion();
+  showScreen("question");
+}
+
+/* ================= SÉLECTION DE QUESTION (cascade) ================= */
+function pickQuestion() {
+  const order = [state.level, state.level + 1, state.level + 2, state.level - 1, state.level - 2]
+    .filter(l => l >= 1 && l <= 3);
+  for (const l of order) {
+    const cand = POOL.filter((q, i) => q.level === l && !state.used.has(i));
+    if (cand.length) { return POOL.indexOf(cand[0]); }
+  }
+  return -1;
+}
+
+function loadNextQuestion() {
+  if (state.count >= MANCHE_LENGTH) { renderBonus(); return; }
+  const idx = pickQuestion();
+  if (idx === -1) { renderBonus(); return; }
+  state.used.add(idx);
+  state.currentQ = { ...POOL[idx], _idx: idx };
+  state.count++;
+  state.answered = false;
+  state.pre = { score: state.score, level: state.level, streak: state.streak };
+  renderQuestion();
+}
+
+/* ================= AFFICHAGE QUESTION ================= */
+function applyLevelTheme() {
+  const sc = $("screen-question");
+  sc.classList.remove("lvl1", "lvl2", "lvl3");
+  sc.classList.add("lvl" + state.level);
+  const body = $("q-body");
+  body.classList.remove("lvl1", "lvl2", "lvl3");
+  body.classList.add("lvl" + state.level);
+  $("q-level-name").textContent = "Niveau " + state.level + " · " + LEVELS[state.level - 1].name;
+  $("q-mult").textContent = "×" + LEVELS[state.level - 1].points;
+}
+
+function renderStreak() {
+  const el = $("q-streak");
+  if (state.level >= 3) { el.className = "streak max"; el.innerHTML = "🔥 Niveau Expert — Atelier validé ✅ (+1 pt OPEN 88)"; return; }
+  el.className = "streak";
+  const dots = `<span class="streak-dots"><span class="streak-dot ${state.streak >= 1 ? "on" : ""}"></span><span class="streak-dot ${state.streak >= 2 ? "on" : ""}"></span></span>`;
+  const left = 2 - state.streak;
+  el.innerHTML = `Série : ${dots} <span>encore ${left} bonne${left > 1 ? "s" : ""} réponse${left > 1 ? "s" : ""} pour monter</span>`;
+}
+
+function renderQuestion() {
+  const q = state.currentQ;
+  applyLevelTheme();
+  $("q-group").textContent = state.groupName;
+  $("q-score").textContent = state.score;
+  $("q-counter").textContent = `Question ${state.count} / ${MANCHE_LENGTH}`;
+  $("q-progress").style.width = ((state.count - 1) / MANCHE_LENGTH) * 100 + "%";
+  renderStreak();
+
+  $("q-explain").classList.remove("show");
+  const zone = $("q-answer-zone"); zone.innerHTML = "";
+  $("btn-next").disabled = true;
+  $("btn-redo").style.visibility = "hidden";
+
+  const stmt = $("q-statement"); stmt.textContent = q.statement;
+  stmt.classList.remove("anim-statement"); void stmt.offsetWidth; stmt.classList.add("anim-statement");
+  $("q-type-tag").textContent = TYPE_LABELS[q.type];
+
+  if (q.type === "tf") renderTF(q);
+  else if (q.type === "qcm") renderQCM(q);
+}
+
+function setExplanation(q, showVerdict, gained) {
+  const verdict = $("q-verdict");
+  if (showVerdict && q.verdict) {
+    verdict.textContent = q.verdict;
+    verdict.className = "verdict " + (q.correct ? "ok" : "ko");
+    verdict.style.display = "block";
+  } else { verdict.style.display = "none"; }
+  const ptsTxt = gained > 0 ? ` (+${gained} pt${gained > 1 ? "s" : ""})` : "";
+  $("q-explain-text").innerHTML = escapeHtml(q.explanation) + (ptsTxt ? ` <span class="pts">${ptsTxt}</span>` : "");
+  $("q-link-wrap").innerHTML = q.link ? `<a href="${q.link.url}" target="_blank" rel="noopener">${escapeHtml(q.link.label)} ↗</a>` : "";
+  $("q-explain").classList.add("show");
+}
+
+function registerAnswer(isCorrect) {
+  let gained = 0;
+  if (isCorrect) {
+    gained = LEVELS[state.level - 1].points;
+    state.score += gained;
+    state.streak++;
+    if (state.streak >= 2 && state.level < 3) {
+      state.level++;
+      state.streak = 0;
+      state.maxLevel = Math.max(state.maxLevel, state.level);
+      state.pendingLevelUp = state.level;
+    }
+  } else {
+    state.streak = 0;
+  }
+  state.answered = true;
+  $("q-score").textContent = state.score;
+  if (isCorrect && !reduceMotion) {
+    const box = $("q-score-box"); box.classList.remove("bump"); void box.offsetWidth; box.classList.add("bump");
+  }
+  renderStreak();
+  $("btn-next").disabled = false;
+  $("btn-redo").style.visibility = "visible";
+  return gained;
+}
+
+/* ---------- VRAI / FAUX ---------- */
+function renderTF(q) {
+  const zone = $("q-answer-zone");
+  zone.innerHTML = `<div class="tf-buttons">
+      <button class="tf-btn" data-val="true">VRAI</button>
+      <button class="tf-btn" data-val="false">FAUX</button></div>`;
+  const btns = zone.querySelectorAll(".tf-btn");
+  btns.forEach(btn => btn.addEventListener("click", () => {
+    if (state.answered) return;
+    const chosen = btn.dataset.val === "true";
+    const isCorrect = chosen === q.correct;
+    applyTFFeedback(q, btns, chosen, true);
+    const gained = registerAnswer(isCorrect);
+    setExplanation(q, true, gained);
+  }));
+}
+
+function applyTFFeedback(q, btns, chosen, animate) {
+  btns.forEach(btn => {
+    btn.disabled = true;
+    const val = btn.dataset.val === "true";
+    if (val === q.correct) { btn.classList.add("answer-correct"); if (animate && !reduceMotion) btn.classList.add("glow"); btn.insertAdjacentHTML("beforeend", " ✓"); }
+    if (val === chosen && chosen !== q.correct) { btn.classList.add("answer-wrong"); if (animate && !reduceMotion) btn.classList.add("shake"); btn.insertAdjacentHTML("beforeend", " ✗"); }
+  });
+}
+
+/* ---------- QCM ---------- */
+function renderQCM(q) {
+  const zone = $("q-answer-zone");
+  const keys = ["A", "B", "C", "D"];
+  zone.innerHTML = `<div class="mc-options">${
+    q.options.map((o, idx) => `<button class="mc-btn" data-idx="${idx}"><span class="mc-key">${keys[idx]}</span><span>${escapeHtml(o)}</span></button>`).join("")
+  }</div>`;
+  const btns = zone.querySelectorAll(".mc-btn");
+  btns.forEach(btn => btn.addEventListener("click", () => {
+    if (state.answered) return;
+    const idx = parseInt(btn.dataset.idx, 10);
+    const isCorrect = idx === q.correctIndex;
+    applyQCMFeedback(q, btns, idx, true);
+    const gained = registerAnswer(isCorrect);
+    setExplanation(q, false, gained);
+  }));
+}
+
+function applyQCMFeedback(q, btns, chosenIdx, animate) {
+  btns.forEach(btn => {
+    btn.disabled = true;
+    const idx = parseInt(btn.dataset.idx, 10);
+    if (idx === q.correctIndex) { btn.classList.add("answer-correct"); if (animate && !reduceMotion) btn.classList.add("glow"); btn.insertAdjacentHTML("beforeend", " ✓"); }
+    if (idx === chosenIdx && chosenIdx !== q.correctIndex) { btn.classList.add("answer-wrong"); if (animate && !reduceMotion) btn.classList.add("shake"); btn.insertAdjacentHTML("beforeend", " ✗"); }
+  });
+}
+
+/* ---------- Corriger la réponse ---------- */
+function redoAnswer() {
+  if (state.currentQ && state.answered) {
+    // Restaure l'état d'avant réponse
+    state.score = state.pre.score; state.level = state.pre.level; state.streak = state.pre.streak;
+    state.pendingLevelUp = 0; state.answered = false;
+    renderQuestion();
+  } else if (!state.currentQ && state.bonusAnswered) {
+    state.bonusAnswered = false; state.bonusChosenIndex = null; state.bonusCorrect = false;
+    renderBonus();
+  }
+}
+
+/* ================= PASSAGE DE NIVEAU ================= */
+function playLevelUp(lvl, cb) {
+  const ov = $("levelup-overlay");
+  $("lo-level").textContent = "NIVEAU " + lvl;
+  $("lo-name").textContent = LEVELS[lvl - 1].name;
+  $("lo-mult").textContent = (lvl >= VALIDATION_LEVEL)
+    ? "Points × " + LEVELS[lvl - 1].points + " · Atelier validé ✅"
+    : "Points × " + LEVELS[lvl - 1].points;
+  ov.className = "show lvl" + lvl;
+  $("lo-flames").style.display = (lvl === 3 && !reduceMotion) ? "flex" : "none";
+  const dur = reduceMotion ? 850 : 1900;
+  setTimeout(() => { ov.className = ""; if (cb) cb(); }, dur);
+}
+
+/* ================= NAVIGATION ================= */
+function goNext() {
+  if (!state.answered && state.currentQ) return;        // question non répondue
+  if (!state.currentQ && !state.bonusAnswered) return;  // bonus non répondu
+  if (state.currentQ && state.pendingLevelUp) {
+    const lvl = state.pendingLevelUp; state.pendingLevelUp = 0;
+    playLevelUp(lvl, () => loadNextQuestion());
+    return;
+  }
+  if (state.currentQ) { loadNextQuestion(); }
+  else { finishRound(); }
+}
+
+/* ================= QUESTION BONUS ================= */
+function renderBonus() {
+  state.currentQ = null;
+  $("screen-question").classList.remove("lvl1", "lvl2", "lvl3"); $("screen-question").classList.add("lvl3");
+  $("q-body").classList.remove("lvl1", "lvl2"); $("q-body").classList.add("lvl3");
+  $("q-group").textContent = state.groupName;
+  $("q-level-name").textContent = "Question bonus 🤖";
+  $("q-mult").textContent = "à part";
+  $("q-counter").textContent = "Bonus (point compté séparément)";
+  $("q-streak").className = "streak"; $("q-streak").innerHTML = "";
+  $("q-progress").style.width = "100%";
+  $("q-type-tag").textContent = "Choix multiple";
+  const stmt = $("q-statement"); stmt.textContent = BONUS.statement;
+  stmt.classList.remove("anim-statement"); void stmt.offsetWidth; stmt.classList.add("anim-statement");
+  $("q-explain").classList.remove("show");
+  $("btn-next").textContent = "Voir le résultat ▶";
+
+  const zone = $("q-answer-zone");
+  const keys = ["A", "B", "C", "D"];
+  zone.innerHTML = `<div class="mc-options">${
+    BONUS.options.map((o, idx) => `<button class="mc-btn" data-idx="${idx}"><span class="mc-key">${keys[idx]}</span><span>${escapeHtml(o)}</span></button>`).join("")
+  }</div>`;
+  const btns = zone.querySelectorAll(".mc-btn");
+  btns.forEach(btn => btn.addEventListener("click", () => {
+    if (state.bonusAnswered) return;
+    state.bonusChosenIndex = parseInt(btn.dataset.idx, 10);
+    state.bonusCorrect = state.bonusChosenIndex === BONUS.correctIndex;
+    state.bonusAnswered = true;
+    showBonusFeedback(btns, true);
+  }));
+
+  if (state.bonusAnswered) { showBonusFeedback(btns, false); }
+  else { $("btn-next").disabled = true; $("btn-redo").style.visibility = "hidden"; }
+}
+
+function showBonusFeedback(btns, animate) {
+  btns.forEach(b => {
+    b.disabled = true;
+    const bIdx = parseInt(b.dataset.idx, 10);
+    if (bIdx === BONUS.correctIndex) { b.classList.add("answer-correct"); if (animate && !reduceMotion) b.classList.add("glow"); b.insertAdjacentHTML("beforeend", " ✓"); }
+    else if (bIdx === state.bonusChosenIndex) { b.classList.add("answer-wrong"); if (animate && !reduceMotion) b.classList.add("shake"); b.insertAdjacentHTML("beforeend", " ✗"); }
+  });
+  const v = $("q-verdict"); v.style.display = "block"; v.className = "verdict " + (state.bonusCorrect ? "ok" : "ko");
+  v.textContent = state.bonusCorrect ? "Bonne réponse ! +1 point bonus" : "Ce n'était pas la bonne… mais quelle surprise !";
+  $("q-explain-text").textContent = BONUS.reveal;
+  $("q-link-wrap").innerHTML = "";
+  $("q-explain").classList.add("show");
+  $("btn-next").disabled = false;
+  $("btn-redo").style.visibility = "visible";
+}
+
+/* ================= FINAL ================= */
+function finishRound() {
+  state.history.push({ name: state.groupName, score: state.score, level: state.maxLevel, bonus: state.bonusCorrect });
+  const idx = state.history.length - 1;
+
+  const validated = isValidated();
+  $("final-group").textContent = state.groupName;
+  $("final-pts").textContent = state.score;
+  $("final-detail").innerHTML = `Niveau maximum atteint : <span class="hl">Niveau ${state.maxLevel} · ${LEVELS[state.maxLevel - 1].name}${state.maxLevel === 3 ? " 🔥" : ""}</span>`;
+  $("final-bonus").innerHTML = state.bonusCorrect
+    ? 'Point bonus : <span class="yes">obtenu ✓ (+1)</span>'
+    : 'Point bonus : <span class="no">non obtenu</span>';
+
+  const badge = $("final-badge");
+  if (validated) {
+    badge.innerHTML = '<div class="badge-win">✅ Atelier validé — 🏆 +1 point OPEN 88</div>';
+  } else {
+    badge.innerHTML = '<div class="badge-encourage">Atelier non validé — atteignez le Niveau 3 (Expert) pour décrocher le point OPEN 88 👏</div>';
+  }
+
+  $("final-recap-body").innerHTML = recapTableHTML(idx);
+  showScreen("final");
+  if (validated) launchConfetti();
+}
+
+/* ---------- Confettis ---------- */
+function launchConfetti() {
+  if (reduceMotion) return;
+  const colors = ["#E94059", "#F7A720", "#FFFFFF", "#64e6a0", "#EAEAF3"];
+  const n = 90;
+  for (let k = 0; k < n; k++) {
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    const dur = 2.6 + ((k * 13) % 20) / 10;
+    const delay = ((k * 7) % 12) / 10;
+    p.style.left = ((k / n) * 100 + (((k * 37) % 11) - 5)) + "vw";
+    p.style.background = colors[k % colors.length];
+    p.style.animation = `confettiFall ${dur}s ${delay}s ease-in forwards`;
+    if (k % 3 === 0) p.style.width = "9px";
+    if (k % 4 === 0) p.style.height = "12px";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), (dur + delay) * 1000 + 200);
+  }
+}
+
+/* ---------- Flammes ---------- */
+function buildFlames() {
+  const q = $("q-flames"); const lo = $("lo-flames");
+  if (q.childElementCount === 0) { for (let i = 0; i < 16; i++) { const f = document.createElement("span"); f.className = "flame"; q.appendChild(f); } }
+  if (lo.childElementCount === 0) { for (let i = 0; i < 12; i++) { const f = document.createElement("span"); f.className = "flame"; lo.appendChild(f); } }
+}
+
+/* ================= NOUVEAU GROUPE / RESET ================= */
+function newGroup() {
+  state.nextGroupLetter++;
+  state.groupName = nextLetterName(state.nextGroupLetter);
+  renderHome();
+}
+
+function resetAll() {
+  if (!confirm("Réinitialiser tout l'événement ? Le récapitulatif des groupes sera effacé.")) return;
+  state.history = []; state.nextGroupLetter = 0; state.groupName = "Groupe A";
+  renderHome();
+}
+
+/* ================= ÉVÉNEMENTS ================= */
+$("btn-start").addEventListener("click", startRound);
+$("btn-next").addEventListener("click", goNext);
+$("btn-redo").addEventListener("click", redoAnswer);
+$("btn-newgroup").addEventListener("click", newGroup);
+$("btn-reset").addEventListener("click", resetAll);
+$("groupName").addEventListener("keydown", (e) => { if (e.key === "Enter") startRound(); });
+
+document.addEventListener("keydown", (e) => {
+  if (!screens.question.classList.contains("active")) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "input" || tag === "textarea") return;
+  if (e.key === "ArrowRight") { e.preventDefault(); if (!$("btn-next").disabled) goNext(); }
+});
+
+/* ================= INIT ================= */
+buildFlames();
+renderHome();
+</script>
+</body>
+</html>
