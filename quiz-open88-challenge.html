@@ -190,7 +190,7 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
   text-align: center; gap: clamp(28px, 5vh, 64px); overflow: hidden;
   transition: background 0.4s ease;
 }
-.q-body.lvl3 { background: radial-gradient(circle at 50% 125%, rgba(247,167,32,0.20), rgba(233,64,89,0.06) 40%, #ffffff 72%); }
+.q-body.lvl3 { background: radial-gradient(circle at 50% 125%, rgba(247,167,32,0.20), rgba(233,64,89,0.06) 40%, #ffffff 72%); padding-bottom: clamp(60px, 9vh, 120px); }
 
 .q-type-tag { display: inline-block; align-self: center; font-size: clamp(12px, 1vw, 16px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); border: 2px solid var(--accent); padding: 3px 12px; position: relative; z-index: 3; }
 .q-statement { font-size: clamp(26px, 3.2vw, 52px); font-weight: 600; line-height: 1.25; color: var(--cdg-bleu); max-width: 30ch; margin: 0 auto; position: relative; z-index: 3; }
@@ -225,15 +225,15 @@ input.group-input:focus { border-color: var(--cdg-rose); box-shadow: 0 0 0 4px r
 
 .q-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px clamp(20px, 5vw, 90px); background: var(--cdg-white); border-top: 1px solid var(--cdg-gray-200); flex-wrap: wrap; }
 
-/* ---------- Flames (niveau 3) ---------- */
-.flames { position: absolute; left: 0; right: 0; bottom: 0; height: 130px; display: none; justify-content: center; align-items: flex-end; gap: 8px; pointer-events: none; z-index: 1; }
+/* ---------- Flames (niveau 3) — bande basse discrète, ne gêne pas la lecture ---------- */
+.flames { position: absolute; left: 0; right: 0; bottom: 0; height: 46px; display: none; justify-content: center; align-items: flex-end; gap: 8px; pointer-events: none; z-index: 1; opacity: 0.75; }
 .q-body.lvl3 .flames { display: flex; }
-.flame { width: 34px; height: 74px; background: linear-gradient(to top, #F7A720 0%, #E94059 55%, rgba(233,64,89,0) 100%); border-radius: 50% 50% 42% 42% / 62% 62% 40% 40%; filter: blur(2px); transform-origin: bottom center; }
+.flame { width: 30px; height: 34px; background: linear-gradient(to top, #F7A720 0%, #E94059 60%, rgba(233,64,89,0) 100%); border-radius: 50% 50% 42% 42% / 62% 62% 40% 40%; filter: blur(2px); transform-origin: bottom center; }
 @media (prefers-reduced-motion: no-preference) {
   .flame { animation: flicker 0.5s ease-in-out infinite alternate; }
-  .flame:nth-child(2n) { animation-duration: 0.62s; height: 96px; }
-  .flame:nth-child(3n) { animation-duration: 0.44s; height: 60px; }
-  .flame:nth-child(5n) { animation-duration: 0.7s; height: 108px; }
+  .flame:nth-child(2n) { animation-duration: 0.62s; height: 42px; }
+  .flame:nth-child(3n) { animation-duration: 0.44s; height: 28px; }
+  .flame:nth-child(5n) { animation-duration: 0.7s; height: 46px; }
 }
 
 /* ---------- Level-up overlay ---------- */
