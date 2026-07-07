@@ -90,6 +90,15 @@ h1.title { font-size:clamp(32px,5.2vw,84px); font-weight:700; line-height:1.05; 
 .types-row { display:flex; flex-wrap:wrap; gap:10px; }
 .type-chip { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); padding:8px 16px; font-weight:600; font-size:clamp(14px,1.3vw,20px); }
 
+/* ---------- Choix d'avatar d'équipe ---------- */
+.avatar-wrap { display:flex; flex-direction:column; gap:10px; align-items:center; }
+.avatar-wrap label { font-size:clamp(15px,1.3vw,22px); color:var(--cdg-white); font-weight:500; }
+.avatar-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:680px; }
+.avatar-btn { width:clamp(48px,4.5vw,64px); height:clamp(48px,4.5vw,64px); font-size:clamp(26px,2.6vw,38px); background:rgba(255,255,255,0.08); border:3px solid rgba(255,255,255,0.2); border-radius:0; display:flex; align-items:center; justify-content:center; transition:all var(--transition-base); padding:0; }
+.avatar-btn:hover { background:rgba(255,255,255,0.18); transform:translateY(-2px); }
+.avatar-btn.selected { border-color:var(--cdg-orange); background:var(--cdg-orange); }
+.avatar-btn.taken { opacity:0.35; }
+
 /* ---------- Inputs / Buttons ---------- */
 .group-input-wrap { display:flex; flex-direction:column; gap:10px; align-items:center; margin-top:1vh; }
 .group-input-wrap label { font-size:clamp(15px,1.3vw,22px); color:var(--cdg-white); font-weight:500; }
@@ -158,7 +167,7 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
 .cell.special { background:var(--cdg-gray-50); color:var(--cdg-bleu); border:3px dashed var(--cdg-rose); }
 .cell.start { background:var(--cdg-bleu); color:#fff; border-color:var(--cdg-orange); }
 .cell.current { outline:5px solid var(--cdg-orange); outline-offset:1px; z-index:3; }
-.pawn { position:absolute; top:3px; right:3px; width:clamp(18px,1.8vw,30px); height:clamp(18px,1.8vw,30px); border-radius:9999px; background:var(--cdg-orange); border:2px solid #fff; box-shadow:var(--shadow-md); z-index:4; }
+.pawn { position:absolute; top:3px; right:3px; width:clamp(24px,2.4vw,40px); height:clamp(24px,2.4vw,40px); border-radius:9999px; background:#fff; border:2px solid var(--cdg-orange); box-shadow:var(--shadow-md); z-index:4; display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.5vw,24px); line-height:1; }
 @media (prefers-reduced-motion: no-preference) { .pawn.hop { animation:pawnHop 0.28s ease; } }
 
 .center-panel { grid-column:2/7; grid-row:2/5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4vh; text-align:center; padding:10px; }
@@ -267,6 +276,10 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
       <div class="group-input-wrap">
         <label for="teamName">Nom de l'équipe qui va jouer</label>
         <input type="text" id="teamName" class="group-input" value="Équipe A" autocomplete="off">
+      </div>
+      <div class="avatar-wrap">
+        <label>Choisissez l'avatar de l'équipe</label>
+        <div class="avatar-grid" id="avatar-grid"></div>
       </div>
       <div class="btn-row" style="margin-top:1vh">
         <button class="btn btn--orange btn--big" id="btn-start">Commencer ▶</button>
@@ -516,11 +529,13 @@ const BOARD = [
 ];
 const MAX_Q = 10;   // 10 questions par manche (les cases spéciales ne comptent PAS)
 const GOAL = 10;
+const AVATARS = ["🤖","🦊","🦉","🐺","🦁","🐙","🚀","⚡","🧠","🦄","🐝","🎯"];
 const TYPE_LABELS = { tf:"Vrai ou Faux", qcm:"Choix multiple", select:"Sélection multiple", cloud:"Nuage de mots", match:"Relier" };
 
 /* ================= ÉTAT ================= */
 const state = {
   teamName: "Équipe A",
+  avatar: "🤖",
   nextLetter: 0,
   pos: 0,
   rolls: 0,       // nombre total de lancés (affiché à titre indicatif)
@@ -560,8 +575,19 @@ function renderLegend(){
   $("themes-legend").innerHTML = html;
   const rt = $("rules-themes"); if (rt) rt.innerHTML = html;
 }
+function renderAvatars(){
+  const taken = new Set(state.history.map(h=>h.avatar));
+  $("avatar-grid").innerHTML = AVATARS.map(a =>
+    `<button class="avatar-btn${a===state.avatar?" selected":""}${taken.has(a)&&a!==state.avatar?" taken":""}" data-a="${a}" title="${taken.has(a)?"Déjà pris (autorisé)":""}">${a}</button>`
+  ).join("");
+  $("avatar-grid").querySelectorAll(".avatar-btn").forEach(b =>
+    b.addEventListener("click", () => { state.avatar = b.dataset.a; renderAvatars(); })
+  );
+}
+
 function renderHome(){
   $("teamName").value = state.teamName;
+  renderAvatars();
   const r = $("home-recap");
   if (state.history.length){ r.style.display="block"; $("home-recap-body").innerHTML = recapTableHTML(-1); }
   else r.style.display="none";
@@ -572,7 +598,7 @@ function recapTableHTML(hi){
   const rows = state.history.map((h,i)=>{
     const win = h.score >= GOAL;
     const crown = best > 0 && h.score === best;
-    return `<tr class="${i===hi?"just-played":""}"><td>${i+1}</td><td>${escapeHtml(h.name)}${crown?" 👑":""}</td><td class="score${win?" win":""}">${h.score} pts${win?" 🏆":""}</td></tr>`;
+    return `<tr class="${i===hi?"just-played":""}"><td>${i+1}</td><td>${h.avatar||""} ${escapeHtml(h.name)}${crown?" 👑":""}</td><td class="score${win?" win":""}">${h.score} pts${win?" 🏆":""}</td></tr>`;
   }).join("");
   return `<table><thead><tr><th>#</th><th>Équipe</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -642,10 +668,11 @@ function highlightPawn(hop){
   cell.classList.add("current");
   const pawn = document.createElement("div");
   pawn.className = "pawn" + (hop && !reduceMotion ? " hop" : "");
+  pawn.textContent = state.avatar;
   cell.appendChild(pawn);
 }
 function updateHeader(){
-  $("g-team").textContent = state.teamName;
+  $("g-team").textContent = state.avatar + " " + state.teamName;
   $("g-roll").textContent = state.questions;
   $("g-score").textContent = state.score;
   const fx = [];
@@ -1030,10 +1057,10 @@ function continueAfterCard(){
 
 /* ================= FINAL ================= */
 function finishRound(){
-  state.history.push({ name: state.teamName, score: state.score });
+  state.history.push({ name: state.teamName, score: state.score, avatar: state.avatar });
   const idx = state.history.length - 1;
   const win = state.score >= GOAL;
-  $("final-team").textContent = state.teamName;
+  $("final-team").textContent = state.avatar + " " + state.teamName;
   $("final-pts").textContent = state.score;
   $("final-badge").innerHTML = win
     ? '<div class="badge-win">🏆 Point OPEN 88 remporté</div>'
@@ -1063,7 +1090,14 @@ function launchConfetti(){
 }
 
 /* ================= NOUVELLE ÉQUIPE / RESET ================= */
-function newTeam(){ state.nextLetter++; state.teamName = nextLetterName(state.nextLetter); renderHome(); }
+function newTeam(){
+  state.nextLetter++;
+  state.teamName = nextLetterName(state.nextLetter);
+  // Propose automatiquement le premier avatar encore libre
+  const taken = new Set(state.history.map(h=>h.avatar));
+  state.avatar = AVATARS.find(a=>!taken.has(a)) || AVATARS[state.nextLetter % AVATARS.length];
+  renderHome();
+}
 function resetAll(){
   if (!confirm("Réinitialiser tout l'événement ? Le récapitulatif des équipes sera effacé.")) return;
   state.history = []; state.nextLetter = 0; state.teamName = "Équipe A";
@@ -1081,7 +1115,7 @@ function renderPodium(){
         const crown = best > 0 && h.score === best;
         return `<div class="podium-row${crown?" first":""}">
           <span class="rank">${medals[i] || (i+1)+"."}</span>
-          <span class="name">${escapeHtml(h.name)}${crown?" 👑":""}</span>
+          <span class="name">${h.avatar||""} ${escapeHtml(h.name)}${crown?" 👑":""}</span>
           <span class="tags">${h.score>=GOAL?"🏆 Point OPEN 88":""}</span>
           <span class="pts">${h.score} pts</span>
         </div>`;
