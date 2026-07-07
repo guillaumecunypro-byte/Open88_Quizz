@@ -128,6 +128,27 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
 .g-pill .n { color:var(--cdg-orange); font-weight:700; }
 .score-box { border-left:5px solid var(--cdg-orange); }
 
+/* Badges d'effets actifs (double ou rien, indice) */
+.g-effects { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.fx-badge { font-weight:700; font-size:clamp(12px,1.1vw,17px); padding:5px 14px; border-radius:9999px; }
+.fx-double { background:var(--cdg-rose); color:#fff; }
+.fx-hint { background:var(--cdg-orange); color:var(--cdg-bleu-dark); }
+/* Correction discrète du score par l'animateur */
+.score-adj { display:flex; gap:4px; }
+.score-adj button { background:transparent; border:1px solid rgba(255,255,255,0.25); color:rgba(255,255,255,0.55); width:28px; height:28px; font-size:16px; font-weight:700; line-height:1; padding:0; border-radius:0; }
+.score-adj button:hover { background:rgba(255,255,255,0.12); color:#fff; }
+
+/* Podium de clôture */
+.podium-list { width:min(92vw,780px); display:flex; flex-direction:column; gap:10px; margin-top:1vh; }
+.podium-row { display:flex; align-items:center; gap:16px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.16); padding:12px 22px; text-align:left; }
+.podium-row .rank { font-size:clamp(22px,2.4vw,38px); width:1.6em; }
+.podium-row .name { flex:1; font-weight:700; font-size:clamp(18px,1.9vw,30px); }
+.podium-row .pts { font-weight:700; color:var(--cdg-orange); font-size:clamp(18px,1.9vw,30px); white-space:nowrap; }
+.podium-row .tags { font-size:clamp(13px,1.2vw,19px); white-space:nowrap; }
+.podium-row.first { border-color:var(--cdg-orange); background:rgba(247,167,32,0.15); }
+.best-line { font-size:clamp(16px,1.6vw,26px); color:var(--cdg-white); }
+.best-line b { color:var(--cdg-orange); }
+
 /* ---------- Board ---------- */
 .board-wrap { flex:1; background:var(--cdg-white); padding:clamp(16px,3vh,40px) clamp(16px,4vw,60px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2vh; }
 .board { display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(5,1fr); gap:clamp(6px,0.8vw,12px); width:min(94vw,1080px); aspect-ratio:7/5; }
@@ -308,9 +329,9 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
         <div class="rule-section">
           <h3>⭐ Les cases spéciales</h3>
           <ul class="case-list">
-            <li><span class="case-badge solid">🏁</span><span class="case-txt"><b>Départ</b> — le point de démarrage du plateau.</span></li>
+            <li><span class="case-badge solid">🏁</span><span class="case-txt"><b>Départ</b> — si le pion s'y arrête, l'équipe <b>choisit librement son thème</b> pour la question.</span></li>
             <li><span class="case-badge">➕</span><span class="case-txt"><b>Bonus +1</b> — l'équipe gagne <b>1 point offert</b>, sans avoir à répondre à une question.</span></li>
-            <li><span class="case-badge">✖️</span><span class="case-txt"><b>Double ou rien</b> — la prochaine carte vaut le <b>double</b> de points… mais 0 si la réponse est fausse.</span></li>
+            <li><span class="case-badge">✖️</span><span class="case-txt"><b>Double ou rien</b> — la prochaine carte vaut le <b>double</b> de points… mais une mauvaise réponse fait <b>perdre la valeur du pari</b> !</span></li>
             <li><span class="case-badge">❓</span><span class="case-txt"><b>Question surprise</b> — le thème de la carte est <b>tiré au hasard</b> (l'équipe choisit seulement la difficulté).</span></li>
             <li><span class="case-badge">💡</span><span class="case-txt"><b>Coup de pouce</b> — à la prochaine question à choix, une <b>mauvaise réponse est éliminée</b> pour aider l'équipe.</span></li>
           </ul>
@@ -330,8 +351,10 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
     <div class="g-header">
       <div class="g-team"><span class="chip">Manche</span><span id="g-team"></span></div>
       <div class="g-stats">
+        <div class="g-effects" id="g-effects"></div>
         <div class="g-pill">Question <span class="n" id="g-roll">0</span> / 10</div>
         <div class="g-pill score-box">Score : <span class="n" id="g-score">0</span> pts</div>
+        <div class="score-adj"><button id="btn-score-minus" title="Correction animateur : −1 point">−</button><button id="btn-score-plus" title="Correction animateur : +1 point">+</button></div>
       </div>
     </div>
     <div class="board-wrap">
@@ -371,10 +394,27 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
       <div class="final-label" id="final-team"></div>
       <div class="final-score"><span id="final-pts">0</span> <span class="unit">points</span></div>
       <div id="final-badge"></div>
+      <div class="best-line" id="final-best"></div>
       <div class="recap" id="final-recap"><h3>Récapitulatif des équipes</h3><div id="final-recap-body"></div></div>
       <div class="btn-row" style="margin-top:1vh">
         <button class="btn btn--orange btn--big" id="btn-newteam">Nouvelle équipe ▶</button>
+        <button class="btn btn--secondary" id="btn-podium">🏁 Clôturer l'événement</button>
         <button class="btn btn--ghost" id="btn-reset" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3)">Tout réinitialiser</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PODIUM DE CLÔTURE -->
+  <section class="screen screen--blue screen--dark" id="screen-podium">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">Clôture de l'événement</span>
+      <h1 class="title" style="font-size:clamp(28px,4.4vw,64px)">Classement final OPEN 88</h1>
+      <div class="podium-list" id="podium-list"></div>
+      <div class="best-line" id="podium-bonus"></div>
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange" id="btn-podium-back">◀ Retour</button>
       </div>
     </div>
   </section>
@@ -487,6 +527,7 @@ const state = {
   questions: 0,   // nombre de questions RÉELLEMENT posées (limite = 10)
   score: 0,
   used: new Set(),
+  eventUsed: new Set(),   // cartes vues depuis le début de l'événement (toutes équipes)
   doubleNext: false,
   hintNext: false,
   // carte en cours
@@ -496,7 +537,7 @@ const state = {
 
 /* ================= HELPERS ================= */
 const $ = (id) => document.getElementById(id);
-const screens = { home:$("screen-home"), rules:$("screen-rules"), board:$("screen-board"), card:$("screen-card"), final:$("screen-final") };
+const screens = { home:$("screen-home"), rules:$("screen-rules"), board:$("screen-board"), card:$("screen-card"), final:$("screen-final"), podium:$("screen-podium") };
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DICE = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
@@ -527,17 +568,28 @@ function renderHome(){
   showScreen("home");
 }
 function recapTableHTML(hi){
+  const best = bestScore();
   const rows = state.history.map((h,i)=>{
     const win = h.score >= GOAL;
-    return `<tr class="${i===hi?"just-played":""}"><td>${i+1}</td><td>${escapeHtml(h.name)}</td><td class="score${win?" win":""}">${h.score} pts${win?" 🏆":""}</td></tr>`;
+    const crown = best > 0 && h.score === best;
+    return `<tr class="${i===hi?"just-played":""}"><td>${i+1}</td><td>${escapeHtml(h.name)}${crown?" 👑":""}</td><td class="score${win?" win":""}">${h.score} pts${win?" 🏆":""}</td></tr>`;
   }).join("");
   return `<table><thead><tr><th>#</th><th>Équipe</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function bestScore(){
+  return state.history.reduce((m,h)=>Math.max(m,h.score), 0);
+}
+function bestTeams(){
+  const b = bestScore();
+  return b > 0 ? state.history.filter(h=>h.score===b).map(h=>h.name) : [];
 }
 
 /* ================= DÉMARRAGE ================= */
 function startRound(){
   state.teamName = $("teamName").value.trim() || state.teamName;
-  state.pos=0; state.rolls=0; state.questions=0; state.score=0; state.used=new Set();
+  state.pos=0; state.rolls=0; state.questions=0; state.score=0;
+  state.used = new Set(state.eventUsed);   // évite de resservir aux équipes suivantes les cartes déjà vues
   state.doubleNext=false; state.hintNext=false; state.curCard=null; state.answered=false;
   buildBoard();
   updateHeader();
@@ -572,6 +624,7 @@ function buildBoard(){
     el.dataset.i = i;
     el.style.gridRow = r; el.style.gridColumn = c;
     if (info.bg) el.style.background = info.bg;
+    if (cell.theme === "C") el.style.color = "var(--cdg-bleu-dark)"; // lisibilité sur fond orange
     el.innerHTML = (info.ico?`<span class="cell-ico">${info.ico}</span>`:"") + `<span>${escapeHtml(info.label)}</span>`;
     board.appendChild(el);
   });
@@ -595,6 +648,10 @@ function updateHeader(){
   $("g-team").textContent = state.teamName;
   $("g-roll").textContent = state.questions;
   $("g-score").textContent = state.score;
+  const fx = [];
+  if (state.doubleNext) fx.push('<span class="fx-badge fx-double">✖️ Double ou rien actif</span>');
+  if (state.hintNext) fx.push('<span class="fx-badge fx-hint">💡 Indice en attente</span>');
+  $("g-effects").innerHTML = fx.join("");
 }
 function bumpScore(){
   $("g-score").textContent = state.score;
@@ -673,6 +730,7 @@ function afterTurn(){
   // Cases spéciales (bonus, double, coup de pouce, départ) : PAS de question consommée.
   // On revient au plateau pour relancer le dé (question suivante).
   hideModal();
+  updateHeader();
   renderCenter("roll");
 }
 
@@ -689,7 +747,7 @@ function openSpecial(kind){
     state.doubleNext = true;
     html = `<div class="modal-theme-tag" style="background:var(--cdg-rose)">Double ou rien</div>
       <h2>✖️ Double ou rien activé</h2>
-      <p class="modal-sub">Votre <b>prochaine carte</b> vaudra le <b>double</b> de points… mais 0 si la réponse est fausse.</p>
+      <p class="modal-sub">Votre <b>prochaine carte</b> vaudra le <b>double</b> de points… mais attention : une mauvaise réponse vous fera <b>perdre la valeur du pari</b> !</p>
       <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
   } else if (kind==="pouce"){
     state.hintNext = true;
@@ -698,10 +756,19 @@ function openSpecial(kind){
       <p class="modal-sub">Pour votre <b>prochaine question à choix multiple</b>, une mauvaise réponse sera éliminée.</p>
       <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
   } else {
+    // Case Départ : l'équipe choisit librement son thème (plus de tour mort)
+    const themeBtns = THEME_KEYS.map(k =>
+      `<button class="diff-btn" style="border-color:${THEMES[k].color};color:${k==="C"?"var(--cdg-orange-dark)":THEMES[k].color}" data-t="${k}">${escapeHtml(THEMES[k].name)}</button>`
+    ).join("");
     html = `<div class="modal-theme-tag" style="background:var(--cdg-bleu)">Case Départ</div>
-      <h2>🏁 Case Départ</h2>
-      <p class="modal-sub">Rien de spécial ici. Relancez le dé au prochain tour.</p>
-      <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
+      <h2>🏁 Case Départ — à vous de choisir !</h2>
+      <p class="modal-sub">Arrêt sur la case Départ : l'équipe <b>choisit librement son thème</b>.</p>
+      <div class="diff-grid" style="grid-template-columns:repeat(3,1fr)">${themeBtns}</div>`;
+    showModal(html);
+    $("modal-box").querySelectorAll("[data-t]").forEach(b =>
+      b.addEventListener("click", () => { hideModal(); openDifficulty(b.dataset.t, false); })
+    );
+    return;
   }
   showModal(html);
   $("m-continue").addEventListener("click", afterTurn);
@@ -711,7 +778,7 @@ function openSpecial(kind){
 function openDifficulty(theme, surprise){
   const t = THEMES[theme];
   const html = `
-    <div class="modal-theme-tag" style="background:${t.color}">${surprise?"Question surprise · ":""}${escapeHtml(t.name)}</div>
+    <div class="modal-theme-tag" style="background:${t.color}${theme==="C"?";color:var(--cdg-bleu-dark)":""}">${surprise?"Question surprise · ":""}${escapeHtml(t.name)}</div>
     <h2>Choisissez votre pari</h2>
     <p class="modal-sub">${surprise?"Le thème a été tiré au sort. ":""}Plus c'est difficile, plus ça rapporte !${state.doubleNext?" <b>(Double ou rien actif : points ×2 !)</b>":""}</p>
     <div class="diff-grid">
@@ -733,6 +800,7 @@ function drawCard(theme, level){
   if (!pool.length){ state.used = new Set(); pool = CARDS.filter(c=>c.theme===theme); }
   const card = pool[randInt(pool.length)];
   state.used.add(CARDS.indexOf(card));
+  state.eventUsed.add(CARDS.indexOf(card));
   return card;
 }
 
@@ -752,8 +820,11 @@ function startCard(theme, level){
 function renderCard(){
   const card = state.curCard, t = THEMES[state.curTheme];
   $("card-head").style.background = t.color;
+  $("card-head").style.color = (state.curTheme === "C") ? "var(--cdg-bleu-dark)" : "#fff";
   $("ch-theme").textContent = t.name;
-  $("ch-diff").textContent = LEVEL_LABEL[state.curLevel] + " · " + state.curWager + " pt" + (state.curWager>1?"s":"") + (state.curDouble?" (×2)":"");
+  $("ch-diff").textContent = LEVEL_LABEL[state.curLevel] + " · " + state.curWager + " pt" + (state.curWager>1?"s":"")
+    + (state.curDouble?" (×2)":"")
+    + (card.level !== state.curLevel ? " · carte de repli (niv. " + card.level + ")" : "");
   $("card-type").textContent = TYPE_LABELS[card.type] || "Question";
   $("card-statement").textContent = card.statement;
   $("card-explain").classList.remove("show");
@@ -911,8 +982,13 @@ function renderMatch(card, zone){
 
 function finishCard(ok){
   state.answered = true;
-  let gained = 0;
+  let gained = 0, lost = 0;
   if (ok){ gained = state.curWager; state.score += gained; }
+  else if (state.curDouble){
+    // Le « rien » du double ou rien : on perd la valeur du pari de base (plancher 0)
+    lost = Math.min(LEVEL_PTS[state.curLevel], state.score);
+    state.score -= lost;
+  }
   updateHeader();
   if (ok && !reduceMotion){ const box = $("g-score").closest(".g-pill"); box.classList.remove("bump"); void box.offsetWidth; box.classList.add("bump"); }
   // Explication
@@ -920,7 +996,11 @@ function finishCard(ok){
   const v = $("card-verdict");
   v.style.display = "block";
   v.className = "verdict " + (ok ? "ok" : "ko");
-  v.textContent = ok ? ("Bonne réponse ! +" + gained + " pt" + (gained>1?"s":"")) : "Mauvaise réponse — 0 point";
+  v.textContent = ok
+    ? ("Bonne réponse ! +" + gained + " pt" + (gained>1?"s":""))
+    : (state.curDouble
+        ? ("Double ou rien perdu… −" + lost + " pt" + (lost>1?"s":""))
+        : "Mauvaise réponse — 0 point");
   $("card-comment").textContent = card.comment;
   $("card-anec").innerHTML = "<b>Anecdote :</b> " + escapeHtml(card.anec);
   $("card-link").innerHTML = card.link ? `<a href="${card.link.url}" target="_blank" rel="noopener">${escapeHtml(card.link.label)} ↗</a>` : "";
@@ -944,6 +1024,7 @@ function continueAfterCard(){
   if (!state.answered) return;
   state.curCard = null;
   showScreen("board");
+  updateHeader();
   renderCenter("roll"); // affiche "Voir le résultat" si les 10 questions sont faites
 }
 
@@ -957,6 +1038,10 @@ function finishRound(){
   $("final-badge").innerHTML = win
     ? '<div class="badge-win">🏆 Point OPEN 88 remporté</div>'
     : '<div class="badge-encourage">Objectif manqué de peu — bravo pour la participation 👏</div>';
+  const leaders = bestTeams();
+  $("final-best").innerHTML = leaders.length
+    ? `👑 Meilleur score de l'événement : <b>${leaders.map(escapeHtml).join(" & ")}</b> (${bestScore()} pts) — en lice pour le point bonus !`
+    : "";
   $("final-recap-body").innerHTML = recapTableHTML(idx);
   showScreen("final");
   if (win) launchConfetti();
@@ -981,7 +1066,35 @@ function launchConfetti(){
 function newTeam(){ state.nextLetter++; state.teamName = nextLetterName(state.nextLetter); renderHome(); }
 function resetAll(){
   if (!confirm("Réinitialiser tout l'événement ? Le récapitulatif des équipes sera effacé.")) return;
-  state.history = []; state.nextLetter = 0; state.teamName = "Équipe A"; renderHome();
+  state.history = []; state.nextLetter = 0; state.teamName = "Équipe A";
+  state.eventUsed = new Set();
+  renderHome();
+}
+
+/* ================= PODIUM DE CLÔTURE ================= */
+function renderPodium(){
+  const sorted = [...state.history].sort((a,b)=>b.score-a.score);
+  const best = sorted.length ? sorted[0].score : 0;
+  const medals = ["🥇","🥈","🥉"];
+  $("podium-list").innerHTML = sorted.length
+    ? sorted.map((h,i)=>{
+        const crown = best > 0 && h.score === best;
+        return `<div class="podium-row${crown?" first":""}">
+          <span class="rank">${medals[i] || (i+1)+"."}</span>
+          <span class="name">${escapeHtml(h.name)}${crown?" 👑":""}</span>
+          <span class="tags">${h.score>=GOAL?"🏆 Point OPEN 88":""}</span>
+          <span class="pts">${h.score} pts</span>
+        </div>`;
+      }).join("")
+    : '<p style="color:rgba(255,255,255,0.7);font-style:italic">Aucune équipe n\'a encore joué.</p>';
+  const leaders = bestTeams().map(escapeHtml);
+  $("podium-bonus").innerHTML = leaders.length === 1
+    ? `⭐ <b>${leaders[0]}</b> remporte le point bonus du meilleur score !`
+    : leaders.length > 1
+      ? `⭐ Égalité au meilleur score (${leaders.join(" & ")}) — départagez-les pour attribuer le point bonus !`
+      : "";
+  showScreen("podium");
+  launchConfetti();
 }
 
 /* ================= ÉVÉNEMENTS ================= */
@@ -993,6 +1106,10 @@ $("btn-continue").addEventListener("click", continueAfterCard);
 $("btn-cancel").addEventListener("click", cancelCard);
 $("btn-newteam").addEventListener("click", newTeam);
 $("btn-reset").addEventListener("click", resetAll);
+$("btn-podium").addEventListener("click", renderPodium);
+$("btn-podium-back").addEventListener("click", () => showScreen("final"));
+$("btn-score-minus").addEventListener("click", () => { state.score = Math.max(0, state.score - 1); updateHeader(); });
+$("btn-score-plus").addEventListener("click", () => { state.score++; updateHeader(); });
 $("teamName").addEventListener("keydown", (e)=>{ if(e.key==="Enter") startRound(); });
 
 document.addEventListener("keydown", (e) => {
