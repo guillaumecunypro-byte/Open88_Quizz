@@ -68,6 +68,28 @@ h1.title { font-size:clamp(32px,5.2vw,84px); font-weight:700; line-height:1.05; 
 .legend-chip { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); padding:8px 14px; font-size:clamp(13px,1.1vw,18px); }
 .legend-dot { width:16px; height:16px; }
 
+/* ---------- Page Règles ---------- */
+.rules-scroll { flex:1; overflow-y:auto; padding:clamp(20px,4vh,48px) 5vw; display:flex; justify-content:center; position:relative; z-index:1; }
+.rules-inner { max-width:1040px; width:100%; display:flex; flex-direction:column; gap:20px; align-items:flex-start; text-align:left; }
+.rules-inner .brand-tag, .rules-inner .title, .rules-inner .deco-bar { align-self:center; }
+.rules-inner .title { font-size:clamp(28px,4vw,58px); }
+.rule-section { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-left:5px solid var(--cdg-orange); padding:18px 26px; width:100%; }
+.rule-section h3 { color:var(--cdg-orange); font-size:clamp(18px,1.8vw,28px); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px; }
+.rule-section p { font-size:clamp(15px,1.4vw,22px); color:#fff; line-height:1.55; }
+.rule-section ul { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.rule-section li { font-size:clamp(15px,1.4vw,22px); color:#fff; line-height:1.5; padding-left:26px; position:relative; }
+.rule-section li::before { content:"▸"; position:absolute; left:0; color:var(--cdg-rose); font-weight:700; }
+.rule-hl { background:var(--cdg-orange); color:var(--cdg-bleu-dark); font-weight:700; padding:1px 8px; }
+.rule-hl-rose { background:var(--cdg-rose); color:#fff; font-weight:700; padding:1px 8px; }
+.case-list { list-style:none; display:flex; flex-direction:column; gap:14px; }
+.case-list li { display:flex; gap:14px; align-items:flex-start; padding-left:0; }
+.case-list li::before { content:none; }
+.case-badge { flex:0 0 auto; width:clamp(42px,4vw,56px); height:clamp(42px,4vw,56px); display:flex; align-items:center; justify-content:center; font-size:clamp(20px,2.2vw,30px); border:3px dashed var(--cdg-rose); background:rgba(255,255,255,0.08); }
+.case-badge.solid { border-style:solid; border-color:var(--cdg-orange); }
+.case-txt b { color:var(--cdg-orange); }
+.types-row { display:flex; flex-wrap:wrap; gap:10px; }
+.type-chip { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); padding:8px 16px; font-weight:600; font-size:clamp(14px,1.3vw,20px); }
+
 /* ---------- Inputs / Buttons ---------- */
 .group-input-wrap { display:flex; flex-direction:column; gap:10px; align-items:center; margin-top:1vh; }
 .group-input-wrap label { font-size:clamp(15px,1.3vw,22px); color:var(--cdg-white); font-weight:500; }
@@ -227,10 +249,78 @@ input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgb
       </div>
       <div class="btn-row" style="margin-top:1vh">
         <button class="btn btn--orange btn--big" id="btn-start">Commencer ▶</button>
+        <button class="btn btn--ghost btn--big" id="btn-rules" style="color:#fff;border-color:rgba(255,255,255,0.4)">📖 Règles du jeu</button>
       </div>
       <div class="recap" id="home-recap" style="display:none">
         <h3>Équipes déjà passées</h3>
         <div id="home-recap-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RÈGLES DU JEU -->
+  <section class="screen screen--blue" id="screen-rules">
+    <div class="watermark">88</div>
+    <div class="rules-scroll">
+      <div class="rules-inner">
+        <div class="deco-bar"></div>
+        <span class="brand-tag">Règles du jeu</span>
+        <h1 class="title">Comment jouer au Jeu OPEN 88</h1>
+
+        <div class="rule-section">
+          <h3>🎯 Objectif</h3>
+          <p>Chaque équipe joue une manche de <b>10 questions</b>. Le but : accumuler le plus de points possible.</p>
+          <ul>
+            <li>Une équipe qui atteint <span class="rule-hl">10 points</span> remporte <b>1 point OPEN 88 (CDG88)</b> pour l'atelier.</li>
+            <li>À la fin de l'événement, l'équipe ayant obtenu le <b>plus gros score total</b> remporte en plus <span class="rule-hl-rose">le point bonus</span> !</li>
+          </ul>
+        </div>
+
+        <div class="rule-section">
+          <h3>🎲 Déroulé d'un tour</h3>
+          <ul>
+            <li>Les équipes passent <b>chacune leur tour</b> : une équipe joue toute sa manche, puis c'est à la suivante.</li>
+            <li>À chaque tour, l'équipe <b>lance le dé</b> et son pion avance sur le plateau.</li>
+            <li>La <b>couleur de la case</b> atteinte donne le <b>thème</b> de la question.</li>
+            <li>L'équipe choisit ensuite son <b>pari de difficulté</b> : <b>Facile = 1 point</b>, <b>Moyenne = 2 points</b>, <b>Difficile = 3 points</b>.</li>
+            <li>Bonne réponse → l'équipe <b>gagne les points</b> de la carte. Mauvaise réponse → <b>0 point</b> (aucune pénalité).</li>
+            <li>Après chaque réponse, l'animateur lit le <b>commentaire de sensibilisation</b> et une <b>anecdote</b> : c'est le cœur pédagogique du jeu.</li>
+          </ul>
+        </div>
+
+        <div class="rule-section">
+          <h3>🧩 Les types de questions</h3>
+          <div class="types-row">
+            <span class="type-chip">✔️ Vrai / Faux</span>
+            <span class="type-chip">🔤 Choix multiple (QCM)</span>
+            <span class="type-chip">☑️ Sélection multiple</span>
+            <span class="type-chip">💬 Nuage de mots</span>
+            <span class="type-chip">🔗 Relier</span>
+          </div>
+          <p style="margin-top:12px">Sélection multiple : cliquez <b>toutes</b> les bonnes réponses. Nuage de mots : cliquez les bons mots. Relier : associez chaque élément de gauche à celui de droite.</p>
+        </div>
+
+        <div class="rule-section">
+          <h3>🎨 Les 6 thèmes du plateau</h3>
+          <div class="themes-legend" id="rules-themes" style="justify-content:flex-start"></div>
+        </div>
+
+        <div class="rule-section">
+          <h3>⭐ Les cases spéciales</h3>
+          <ul class="case-list">
+            <li><span class="case-badge solid">🏁</span><span class="case-txt"><b>Départ</b> — le point de démarrage du plateau.</span></li>
+            <li><span class="case-badge">➕</span><span class="case-txt"><b>Bonus +1</b> — l'équipe gagne <b>1 point offert</b>, sans avoir à répondre à une question.</span></li>
+            <li><span class="case-badge">✖️</span><span class="case-txt"><b>Double ou rien</b> — la prochaine carte vaut le <b>double</b> de points… mais 0 si la réponse est fausse.</span></li>
+            <li><span class="case-badge">❓</span><span class="case-txt"><b>Question surprise</b> — le thème de la carte est <b>tiré au hasard</b> (l'équipe choisit seulement la difficulté).</span></li>
+            <li><span class="case-badge">💡</span><span class="case-txt"><b>Coup de pouce</b> — à la prochaine question à choix, une <b>mauvaise réponse est éliminée</b> pour aider l'équipe.</span></li>
+          </ul>
+          <p style="margin-top:14px">💡 <b>Important :</b> les cases spéciales <span class="rule-hl">ne comptent pas</span> parmi vos 10 questions — après leur effet, l'équipe <b>relance le dé</b>.</p>
+        </div>
+
+        <div class="btn-row" style="align-self:center;margin:1vh 0 2vh">
+          <button class="btn btn--orange btn--big" id="btn-rules-start">Commencer à jouer ▶</button>
+          <button class="btn btn--ghost btn--big" id="btn-rules-back" style="color:#fff;border-color:rgba(255,255,255,0.4)">◀ Retour à l'accueil</button>
+        </div>
       </div>
     </div>
   </section>
@@ -419,7 +509,7 @@ const state = {
 
 /* ================= HELPERS ================= */
 const $ = (id) => document.getElementById(id);
-const screens = { home:$("screen-home"), board:$("screen-board"), card:$("screen-card"), final:$("screen-final") };
+const screens = { home:$("screen-home"), rules:$("screen-rules"), board:$("screen-board"), card:$("screen-card"), final:$("screen-final") };
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const DICE = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
@@ -436,9 +526,11 @@ function cssEscape(s){ return String(s).replace(/["\\]/g,"\\$&"); }
 
 /* ================= ACCUEIL ================= */
 function renderLegend(){
-  $("themes-legend").innerHTML = THEME_KEYS.map(k =>
+  const html = THEME_KEYS.map(k =>
     `<span class="legend-chip"><span class="legend-dot" style="background:${THEMES[k].color}"></span>${escapeHtml(THEMES[k].name)}</span>`
   ).join("");
+  $("themes-legend").innerHTML = html;
+  const rt = $("rules-themes"); if (rt) rt.innerHTML = html;
 }
 function renderHome(){
   $("teamName").value = state.teamName;
@@ -907,6 +999,9 @@ function resetAll(){
 
 /* ================= ÉVÉNEMENTS ================= */
 $("btn-start").addEventListener("click", startRound);
+$("btn-rules").addEventListener("click", () => showScreen("rules"));
+$("btn-rules-start").addEventListener("click", startRound);
+$("btn-rules-back").addEventListener("click", renderHome);
 $("btn-continue").addEventListener("click", continueAfterCard);
 $("btn-cancel").addEventListener("click", cancelCard);
 $("btn-newteam").addEventListener("click", newTeam);
