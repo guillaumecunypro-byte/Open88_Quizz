@@ -1,0 +1,183 @@
+[
+  {
+    "id": "fonc-tokens",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 1,
+    "payload": {
+      "term": "Token",
+      "definition": "Fragment de texte, unité élémentaire que le modèle manipule à la place des mots.",
+      "example": "« Bonjour » forme souvent un seul token, « anticonstitutionnellement » en compte plusieurs. Le découpage dépend de la fréquence du fragment dans le corpus d'entraînement.",
+      "pitfall": "S'étonner qu'un modèle échoue à compter les lettres d'un mot. Il ne les voit pas individuellement : il voit des blocs."
+    },
+    "sources": [{ "name": "Documentation technique des modèles de langage" }]
+  },
+  {
+    "id": "fonc-attention",
+    "type": "question",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "question": "Dans un Transformer, à quoi sert le mécanisme d'attention ?",
+      "options": [
+        "À filtrer les contenus inappropriés avant génération",
+        "À pondérer l'importance de chaque token vis-à-vis de tous les autres du contexte",
+        "À accélérer le calcul en ignorant les mots rares",
+        "À corriger les fautes d'orthographe de la requête"
+      ],
+      "correctIndex": 1,
+      "explanation": "Dans « la clé de la voiture qu'il avait garée hier », c'est l'attention qui rattache « garée » à « voiture » plutôt qu'à « clé ». C'est le mécanisme central de l'architecture."
+    },
+    "sources": [{ "name": "Vaswani et al.", "date": "2017" }]
+  },
+  {
+    "id": "fonc-embeddings",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "term": "Embedding",
+      "definition": "Représentation d'un token sous forme de vecteur de plusieurs milliers de dimensions.",
+      "example": "Les termes de sens proche occupent des positions voisines dans cet espace. C'est ce qui permet à une recherche sémantique de retrouver « véhicule » à partir de « voiture ».",
+      "pitfall": "Confondre proximité sémantique et synonymie. « Chaud » et « froid » sont très proches dans l'espace des embeddings, car ils apparaissent dans les mêmes contextes."
+    },
+    "sources": [{ "name": "Mikolov et al., word2vec", "date": "2013" }]
+  },
+  {
+    "id": "fonc-hallucination",
+    "type": "question",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "question": "Pourquoi un modèle de langage produit-il des affirmations fausses avec assurance ?",
+      "options": [
+        "Parce que ses données d'entraînement contiennent des erreurs",
+        "Parce qu'il est optimisé pour produire une suite plausible, pas pour dire vrai",
+        "Parce qu'il manque de puissance de calcul au moment de répondre",
+        "Parce qu'il cherche délibérément à satisfaire l'utilisateur"
+      ],
+      "correctIndex": 1,
+      "explanation": "L'objectif d'entraînement porte sur la plausibilité de la suite, pas sur la vérité. Rien ne pousse le modèle à s'abstenir quand il ignore un fait. C'est une propriété du mécanisme, ce qui explique qu'on la réduise sans l'éliminer."
+    },
+    "sources": [{ "name": "Littérature sur la calibration des modèles de langage" }]
+  },
+  {
+    "id": "fonc-entrainement",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "term": "Les trois temps de l'entraînement",
+      "definition": "Pré-entraînement, ajustement supervisé, puis apprentissage par renforcement à partir de retours.",
+      "example": "Le pré-entraînement apprend à prédire le token suivant sur un très grand corpus, sans tâche particulière. L'ajustement montre des exemples de bonnes réponses. Le renforcement oriente le comportement selon des préférences.",
+      "pitfall": "Croire que le modèle apprend pendant les conversations. Les poids sont figés à l'issue de l'entraînement ; ils ne bougent plus à l'usage."
+    },
+    "sources": [{ "name": "Ouyang et al., InstructGPT", "date": "2022" }]
+  },
+  {
+    "id": "fonc-contexte",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 1,
+    "payload": {
+      "term": "Fenêtre de contexte",
+      "definition": "Quantité maximale de texte que le modèle peut prendre en compte simultanément.",
+      "example": "Tout ce qui ressemble à un souvenir d'une conversation précédente est en réalité du texte réinjecté dans le contexte par l'application, pas une mémoire du modèle.",
+      "pitfall": "Supposer qu'un grand contexte garantit une bonne prise en compte. Les performances se dégradent souvent sur les informations situées au milieu d'un très long contexte."
+    },
+    "sources": [{ "name": "Liu et al., Lost in the Middle", "date": "2023" }]
+  },
+  {
+    "id": "fonc-rag",
+    "type": "question",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "question": "Que fait exactement une architecture RAG (génération augmentée par récupération) ?",
+      "options": [
+        "Elle réentraîne le modèle sur les documents de l'entreprise",
+        "Elle recherche des documents pertinents et les injecte dans le contexte avant de répondre",
+        "Elle compresse le modèle pour le faire tourner en local",
+        "Elle vérifie automatiquement les réponses auprès d'une seconde IA"
+      ],
+      "correctIndex": 1,
+      "explanation": "Le modèle n'est pas modifié : on lui fournit une documentation à consulter au moment de répondre. C'est pour cela que le RAG est préférable au fine-tuning pour ajouter des connaissances factuelles."
+    },
+    "sources": [{ "name": "Lewis et al., RAG", "date": "2020" }]
+  },
+  {
+    "id": "fonc-temperature",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "term": "Température",
+      "definition": "Paramètre qui règle le degré d'aléa dans le choix du token suivant.",
+      "example": "À température basse, le modèle retient presque toujours le token le plus probable : réponses stables et répétitives. À température élevée, il puise plus largement : réponses variées et moins prévisibles.",
+      "pitfall": "Croire qu'une température nulle garantit l'exactitude. Elle garantit la constance, ce qui n'est pas la même chose : une erreur devient simplement systématique."
+    },
+    "sources": [{ "name": "Documentation des API de modèles de langage" }]
+  },
+  {
+    "id": "fonc-finetuning",
+    "type": "question",
+    "theme": "ia-fonctionnement",
+    "difficulty": 3,
+    "payload": {
+      "question": "Pour qu'un modèle connaisse les procédures internes d'une organisation, quelle approche est la plus adaptée ?",
+      "options": [
+        "Le fine-tuning sur les documents internes",
+        "Une architecture RAG branchée sur la base documentaire",
+        "L'augmentation de la fenêtre de contexte",
+        "L'abaissement de la température"
+      ],
+      "correctIndex": 1,
+      "explanation": "Le fine-tuning excelle pour un format ou un style, mais reste peu fiable pour ajouter des connaissances factuelles, et impose un réentraînement à chaque mise à jour. Le RAG consulte une base modifiable en temps réel."
+    },
+    "sources": [{ "name": "Pratiques d'ingénierie des systèmes documentaires" }]
+  },
+  {
+    "id": "fonc-taille",
+    "type": "question",
+    "theme": "ia-fonctionnement",
+    "difficulty": 3,
+    "payload": {
+      "question": "Un modèle avec davantage de paramètres est-il nécessairement plus performant ?",
+      "options": [
+        "Oui, le nombre de paramètres détermine directement la performance",
+        "Non, la qualité des données et la méthode d'entraînement pèsent au moins autant",
+        "Oui, mais uniquement au-delà de cent milliards de paramètres",
+        "Non, seule la fenêtre de contexte compte réellement"
+      ],
+      "correctIndex": 1,
+      "explanation": "Les travaux sur les lois d'échelle ont montré dès 2022 que de nombreux modèles étaient sous-entraînés au regard de leur taille. Depuis, des modèles plus petits mais mieux entraînés dépassent régulièrement de plus gros."
+    },
+    "sources": [{ "name": "Hoffmann et al., Chinchilla", "date": "2022" }]
+  },
+  {
+    "id": "fonc-agents",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "term": "Agent",
+      "definition": "Système qui enchaîne plusieurs actions et utilise des outils externes pour atteindre un objectif, au lieu de produire une seule réponse.",
+      "example": "Un agent chargé d'une recherche peut interroger un moteur, lire plusieurs pages, exécuter du code pour traiter les données, puis rédiger une synthèse — en décidant lui-même de l'enchaînement.",
+      "pitfall": "Sous-estimer la propagation des erreurs. Sur dix étapes à 95 % de fiabilité chacune, la chaîne complète tombe sous 60 %."
+    },
+    "sources": [{ "name": "Littérature sur les architectures agentiques" }]
+  },
+  {
+    "id": "fonc-inference",
+    "type": "notion",
+    "theme": "ia-fonctionnement",
+    "difficulty": 1,
+    "payload": {
+      "term": "Inférence",
+      "definition": "Phase d'utilisation du modèle, par opposition à l'entraînement.",
+      "example": "Générer une réponse consiste à produire un token, l'ajouter au contexte, recommencer. Le texte apparaît progressivement parce qu'il est réellement calculé mot à mot.",
+      "pitfall": "Négliger son coût cumulé. L'entraînement est très coûteux mais ponctuel ; l'inférence est peu coûteuse à l'unité mais répétée des milliards de fois."
+    },
+    "sources": [{ "name": "Analyses de consommation énergétique des systèmes d'IA" }]
+  }
+]

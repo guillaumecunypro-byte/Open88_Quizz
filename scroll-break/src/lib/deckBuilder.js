@@ -1,0 +1,69 @@
+// Assemble un deck de 25 cartes à partir du corpus statique.
+// Ratio fixe (voir CLAUDE.md R1) : 8 brief, 7 question, 5 notion, 4 serial, 1 closing.
+
+export const RATIO = { brief: 8, question: 7, notion: 5, serial: 4 }
+export const DECK_SIZE = 25
+
+// Mélange déterministe : même date = même deck, ce qui évite qu'un rechargement
+// de page redistribue les cartes en cours de session.
+function seededShuffle(items, seed) {
+  const arr = [...items]
+  let s = 0
+  for (const ch of String(seed)) s = (s * 31 + ch.charCodeAt(0)) % 2147483647
+  for (let i = arr.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) % 2147483647
+    const j = s % (i + 1)
+    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  }
+  return arr
+}
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000
+
+// Priorise les questions ratées il y a plus d'une semaine (répétition espacée).
+function prioritise(questions, answered, now) {
+  const due = []
+  const fresh = []
+  const rest = []
+  for (const q of questions) {
+    const a = answered[q.id]
+    if (!a) fresh.push(q)
+    else if (!a.correct && now - a.ts > WEEK_MS) due.push(q)
+    else rest.push(q)
+  }
+  return [...due, ...fresh, ...rest]
+}
+
+export function buildDeck({ pools, progress, date, serialPosition = 0 }) {
+  const now = Date.now()
+  const cards = []
+
+  const briefs = seededShuffle(pools.brief || [], date + 'b').slice(0, RATIO.brief)
+  const questions = prioritise(
+    seededShuffle(pools.question || [], date + 'q'),
+    progress.answered || {},
+    now
+  ).slice(0, RATIO.question)
+  const notions = seededShuffle(pools.notion || [], date + 'n').slice(0, RATIO.notion)
+  const serial = (pools.serial || []).slice(serialPosition, serialPosition + RATIO.serial)
+
+  cards.push(...briefs, ...questions, ...notions)
+
+  // Le feuilleton garde son ordre : on l'insère à intervalles réguliers
+  // après avoir mélangé le reste.
+  const mixed = seededShuffle(cards, date + 'mix')
+  const out = []
+  const step = Math.floor(mixed.length / (serial.length + 1)) || 1
+  let si = 0
+  for (let i = 0; i < mixed.length; i++) {
+    out.push(mixed[i])
+    if (si < serial.length && (i + 1) % step === 0) out.push(serial[si++])
+  }
+  while (si < serial.length) out.push(serial[si++])
+
+  return {
+    date,
+    generatedAt: new Date().toISOString(),
+    cards: out.slice(0, DECK_SIZE - 1)
+  }
+}

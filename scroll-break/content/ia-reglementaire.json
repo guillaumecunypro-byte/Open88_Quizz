@@ -1,0 +1,180 @@
+[
+  {
+    "id": "reg-aiact-base",
+    "type": "notion",
+    "theme": "ia-reglementaire",
+    "difficulty": 1,
+    "payload": {
+      "term": "AI Act",
+      "definition": "Règlement (UE) 2024/1689, premier cadre juridique mondial dédié à l'intelligence artificielle.",
+      "example": "Adopté le 13 juin 2024, entré en vigueur le 1er août 2024. Il classe les usages en quatre niveaux : risque inacceptable (interdit), haut risque (obligations strictes), risque limité (transparence), risque minimal.",
+      "pitfall": "Croire qu'il ne vise que les fournisseurs. Toute organisation qui utilise un système d'IA dans son activité professionnelle est déployeur et porte des obligations propres."
+    },
+    "sources": [{ "name": "Règlement (UE) 2024/1689", "date": "juin 2024" }]
+  },
+  {
+    "id": "reg-niveaux",
+    "type": "question",
+    "theme": "ia-reglementaire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Combien de niveaux de risque l'AI Act distingue-t-il ?",
+      "options": ["Deux", "Trois", "Quatre", "Six"],
+      "correctIndex": 2,
+      "explanation": "Risque inacceptable (pratiques interdites comme la notation sociale), haut risque (recrutement, crédit, santé, justice), risque limité (obligation de transparence, par exemple pour les agents conversationnels), risque minimal (aucune obligation spécifique)."
+    },
+    "sources": [{ "name": "Règlement (UE) 2024/1689" }]
+  },
+  {
+    "id": "reg-calendrier-2026",
+    "type": "question",
+    "theme": "ia-reglementaire",
+    "difficulty": 3,
+    "payload": {
+      "question": "Qu'est-ce qui est devenu applicable le 2 août 2026 au titre de l'AI Act ?",
+      "options": [
+        "L'ensemble des obligations, y compris pour les systèmes à haut risque",
+        "Les obligations de transparence de l'article 50 et les pouvoirs de sanction",
+        "Uniquement les interdictions de pratiques à risque inacceptable",
+        "Les seules obligations applicables aux modèles à usage général"
+      ],
+      "correctIndex": 1,
+      "explanation": "Le paquet Digital Omnibus a reporté les obligations haut risque de l'annexe III au 2 décembre 2027 et celles de l'annexe I au 2 août 2028. En revanche, transparence et pouvoirs de sanction sont bien entrés en application à cette date."
+    },
+    "sources": [{ "name": "Digital Omnibus sur l'IA", "date": "2026" }]
+  },
+  {
+    "id": "reg-sanctions",
+    "type": "question",
+    "theme": "ia-reglementaire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Quel est le plafond de sanction prévu par l'AI Act pour les pratiques interdites ?",
+      "options": [
+        "10 M€ ou 2 % du chiffre d'affaires mondial",
+        "20 M€ ou 4 % du chiffre d'affaires mondial",
+        "35 M€ ou 7 % du chiffre d'affaires mondial",
+        "50 M€ ou 10 % du chiffre d'affaires mondial"
+      ],
+      "correctIndex": 2,
+      "explanation": "Le montant le plus élevé des deux s'applique. Les manquements liés aux systèmes à haut risque relèvent d'un plafond inférieur, à 15 M€ ou 3 %."
+    },
+    "sources": [{ "name": "Règlement (UE) 2024/1689, art. 99" }]
+  },
+  {
+    "id": "reg-literacy",
+    "type": "notion",
+    "theme": "ia-reglementaire",
+    "difficulty": 2,
+    "payload": {
+      "term": "Obligation de maîtrise de l'IA",
+      "definition": "Obligation, pour les fournisseurs et déployeurs, de garantir un niveau suffisant de compétence en IA de leur personnel.",
+      "example": "Applicable depuis le 2 février 2025. Elle vise les personnes qui utilisent les systèmes, pas seulement les équipes techniques.",
+      "pitfall": "L'assimiler à une simple sensibilisation. Elle doit être proportionnée aux usages réels et aux risques associés, et documentée."
+    },
+    "sources": [{ "name": "Règlement (UE) 2024/1689, art. 4" }]
+  },
+  {
+    "id": "reg-rgpd",
+    "type": "question",
+    "theme": "ia-reglementaire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Quelle est la relation entre l'AI Act et le RGPD ?",
+      "options": [
+        "L'AI Act remplace le RGPD pour tout traitement impliquant une IA",
+        "Ils sont complémentaires et peuvent s'appliquer simultanément",
+        "Le RGPD prime toujours et neutralise l'AI Act",
+        "Ils s'appliquent à des territoires distincts"
+      ],
+      "correctIndex": 1,
+      "explanation": "Le RGPD encadre le traitement de données personnelles ; l'AI Act encadre les systèmes d'IA quel que soit le type de données. Un système d'IA traitant des données personnelles relève des deux."
+    },
+    "sources": [{ "name": "Règlements (UE) 2016/679 et 2024/1689" }]
+  },
+  {
+    "id": "idee-comprend",
+    "type": "question",
+    "theme": "ia-idees-recues",
+    "difficulty": 2,
+    "payload": {
+      "question": "Peut-on dire qu'un modèle de langage « comprend » ce qu'il écrit ?",
+      "options": [
+        "Oui, la fluidité de ses réponses démontre une compréhension",
+        "Non, il est prouvé qu'aucune compréhension n'a lieu",
+        "La question reste ouverte : il modélise des régularités statistiques, et le débat n'est pas tranché",
+        "Oui, dès lors qu'il dépasse un certain nombre de paramètres"
+      ],
+      "correctIndex": 2,
+      "explanation": "Le modèle capture des régularités statistiques de très haut niveau. Savoir si cela constitue une forme de compréhension reste philosophiquement disputé et empiriquement indécidé — se méfier autant des affirmations catégoriques dans un sens que dans l'autre."
+    },
+    "sources": [{ "name": "Débat académique en cours" }]
+  },
+  {
+    "id": "idee-apprend",
+    "type": "question",
+    "theme": "ia-idees-recues",
+    "difficulty": 1,
+    "payload": {
+      "question": "Un modèle apprend-il de vos conversations en temps réel ?",
+      "options": [
+        "Oui, chaque échange ajuste ses paramètres",
+        "Non, ses poids sont figés après entraînement",
+        "Oui, mais uniquement au bout de plusieurs milliers d'échanges",
+        "Non, sauf si l'on active une option dédiée"
+      ],
+      "correctIndex": 1,
+      "explanation": "Les poids ne changent pas à l'usage. Vos échanges peuvent en revanche servir à un entraînement ultérieur si le fournisseur le prévoit — question de politique de données, distincte du fonctionnement du modèle."
+    },
+    "sources": [{ "name": "Documentation technique des fournisseurs" }]
+  },
+  {
+    "id": "idee-objective",
+    "type": "question",
+    "theme": "ia-idees-recues",
+    "difficulty": 2,
+    "payload": {
+      "question": "Une IA est-elle plus objective qu'un humain, puisqu'elle repose sur des mathématiques ?",
+      "options": [
+        "Oui, le calcul élimine les biais",
+        "Non, elle reproduit les biais de ses données et de ses évaluateurs",
+        "Oui, à condition que les données soient suffisamment volumineuses",
+        "Non, mais uniquement pour les systèmes de reconnaissance faciale"
+      ],
+      "correctIndex": 1,
+      "explanation": "Le formalisme mathématique ne neutralise pas le contenu des données. Un système entraîné sur des décisions passées reproduit les régularités de ces décisions, y compris discriminatoires — d'où le classement du recrutement et du crédit en haut risque."
+    },
+    "sources": [{ "name": "Littérature sur l'équité algorithmique" }]
+  },
+  {
+    "id": "idee-agi",
+    "type": "question",
+    "theme": "ia-idees-recues",
+    "difficulty": 3,
+    "payload": {
+      "question": "Existe-t-il un consensus scientifique sur l'arrivée d'une intelligence artificielle générale ?",
+      "options": [
+        "Oui, la majorité des chercheurs convergent vers 2030",
+        "Oui, la majorité l'estiment impossible",
+        "Non, les estimations d'experts divergent radicalement, de quelques années à jamais",
+        "Oui, un consensus s'est formé après 2023"
+      ],
+      "correctIndex": 2,
+      "explanation": "Les enquêtes auprès de chercheurs montrent des écarts considérables, y compris sur la définition même du terme. Toute affirmation catégorique sur un calendrier relève de la prise de position, pas du constat scientifique."
+    },
+    "sources": [{ "name": "Enquêtes récurrentes auprès de chercheurs en IA" }]
+  },
+  {
+    "id": "idee-generative",
+    "type": "notion",
+    "theme": "ia-idees-recues",
+    "difficulty": 2,
+    "payload": {
+      "term": "Générative et prédictive",
+      "definition": "L'IA générative produit du contenu nouveau ; l'IA prédictive classe ou anticipe à partir de données existantes.",
+      "example": "La détection de fraude, la maintenance prévisionnelle, le calcul d'itinéraire ou le scoring de crédit sont prédictifs. Ils constituent l'essentiel des usages industriels réels.",
+      "pitfall": "Réduire l'IA au générative depuis 2022. La grande majorité des systèmes d'IA en production dans les organisations relèvent du prédictif."
+    },
+    "sources": [{ "name": "Panorama des usages industriels de l'IA" }]
+  }
+]

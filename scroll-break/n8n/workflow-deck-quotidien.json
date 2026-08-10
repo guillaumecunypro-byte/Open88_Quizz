@@ -1,0 +1,86 @@
+{
+  "name": "Scroll Break — deck quotidien",
+  "nodes": [
+    {
+      "parameters": { "rule": { "interval": [{ "triggerAtHour": 5, "triggerAtMinute": 30 }] } },
+      "name": "Cron 5h30",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 400]
+    },
+    {
+      "parameters": { "url": "https://www.francetvinfo.fr/titres.rss" },
+      "name": "RSS France Info",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [460, 240]
+    },
+    {
+      "parameters": { "url": "http://export.arxiv.org/rss/cs.AI" },
+      "name": "RSS arXiv cs.AI",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [460, 400]
+    },
+    {
+      "parameters": { "url": "https://hnrss.org/frontpage?points=250" },
+      "name": "RSS Hacker News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [460, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fenêtre 24 h + déduplication par similarité de titre.\nconst cutoff = Date.now() - 24 * 3600 * 1000;\nconst seen = new Map();\nfor (const item of $input.all()) {\n  const j = item.json;\n  const ts = new Date(j.isoDate || j.pubDate || Date.now()).getTime();\n  if (ts < cutoff) continue;\n  const key = (j.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').split(' ').slice(0, 6).join(' ');\n  if (!key) continue;\n  if (seen.has(key)) { seen.get(key).sources.push(j.link); continue; }\n  seen.set(key, { title: j.title, summary: (j.contentSnippet || '').slice(0, 600), link: j.link, sources: [j.link], date: new Date(ts).toISOString().slice(0, 10) });\n}\nreturn [...seen.values()].map(json => ({ json }));"
+      },
+      "name": "Dédupliquer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [740, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [
+          { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, system: \"Tu rédiges des cartes d'information factuelles pour une application d'apprentissage.\\n\\nRÈGLES DE VÉRIFICATION, appliquées sans exception :\\n1. Source primaire, ou deux sources secondaires concordantes. Sinon REJET.\\n2. Tout nom propre cité doit apparaître dans la source. Un modèle, une entreprise ou une personne que tu ne retrouves pas dans le texte source : REJET.\\n3. Tout chiffre doit être accompagné de l'institution qui le produit et de sa date. Sinon supprime le chiffre.\\n\\nFORMAT : titre de 60 caractères maximum, corps de 2 phrases, aucun adjectif d'appréciation, aucune formule d'accroche.\\n\\nEn cas de doute : REJET. Un deck court vaut mieux qu'un deck faux.\\n\\nRéponds uniquement en JSON : {\\\"items\\\":[{\\\"title\\\":\\\"\\\",\\\"body\\\":\\\"\\\",\\\"source\\\":\\\"\\\",\\\"date\\\":\\\"\\\"}]} — au maximum 8 items, les plus durables. Critère de sélection : ce fait aura-t-il encore un sens dans six mois ?\", messages: [{ role: 'user', content: JSON.stringify($input.all().map(i => i.json)).slice(0, 40000) }] }) }}"
+      },
+      "name": "Rédiger les briefs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemblage du deck. Contrôle qualité : sous 20 cartes valides, on conserve la veille.\nconst raw = $input.first().json.content?.[0]?.text || '{}';\nlet parsed;\ntry { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()); } catch { parsed = { items: [] }; }\n\nconst briefs = (parsed.items || [])\n  .filter(i => i.title && i.body && i.source)\n  .slice(0, 8)\n  .map((i, n) => ({\n    id: `brief-${new Date().toISOString().slice(0,10)}-${n}`,\n    type: 'brief',\n    theme: 'actualite',\n    difficulty: 1,\n    payload: { title: i.title, body: i.body },\n    sources: [{ name: i.source, date: i.date }]\n  }));\n\nreturn [{ json: { date: new Date().toISOString().slice(0,10), generatedAt: new Date().toISOString(), briefs, count: briefs.length, ok: briefs.length >= 5 } }];"
+      },
+      "name": "Assembler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 400]
+    },
+    {
+      "parameters": { "path": "scroll-break-deck", "responseMode": "lastNode" },
+      "name": "Webhook deck",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [1580, 400]
+    }
+  ],
+  "connections": {
+    "Cron 5h30": { "main": [[{ "node": "RSS France Info", "type": "main", "index": 0 }, { "node": "RSS arXiv cs.AI", "type": "main", "index": 0 }, { "node": "RSS Hacker News", "type": "main", "index": 0 }]] },
+    "RSS France Info": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
+    "RSS arXiv cs.AI": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
+    "RSS Hacker News": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
+    "Dédupliquer": { "main": [[{ "node": "Rédiger les briefs", "type": "main", "index": 0 }]] },
+    "Rédiger les briefs": { "main": [[{ "node": "Assembler", "type": "main", "index": 0 }]] }
+  },
+  "settings": {}
+}
