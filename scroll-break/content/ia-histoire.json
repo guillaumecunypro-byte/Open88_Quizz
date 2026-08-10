@@ -1,0 +1,198 @@
+[
+  {
+    "id": "hist-turing-1950",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 1,
+    "payload": {
+      "question": "En 1950, Alan Turing propose de remplacer la question « les machines peuvent-elles penser ? » par une autre. Laquelle ?",
+      "options": [
+        "Un jeu d'imitation où un juge doit distinguer l'humain de la machine",
+        "Un test de résolution d'équations sous contrainte de temps",
+        "Une mesure de la vitesse de calcul comparée au cerveau humain",
+        "Un questionnaire sur les émotions ressenties par la machine"
+      ],
+      "correctIndex": 0,
+      "explanation": "Dans « Computing Machinery and Intelligence », Turing juge la question initiale mal posée et lui substitue le jeu de l'imitation. On l'appelle depuis le test de Turing, même si Turing n'y voyait pas un critère de conscience."
+    },
+    "sources": [{ "name": "A. Turing, revue Mind", "date": "1950" }]
+  },
+  {
+    "id": "hist-dartmouth",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 1,
+    "payload": {
+      "question": "Où et quand l'expression « intelligence artificielle » a-t-elle été forgée ?",
+      "options": [
+        "Au MIT en 1962, par Marvin Minsky",
+        "À la conférence de Dartmouth en 1956, par John McCarthy",
+        "Chez IBM en 1948, lors des travaux sur les premiers calculateurs",
+        "À Cambridge en 1950, par Alan Turing"
+      ],
+      "correctIndex": 1,
+      "explanation": "McCarthy forge le terme pour l'atelier d'été de Dartmouth, organisé avec Minsky, Rochester et Shannon. Le choix visait notamment à se démarquer de la cybernétique de Norbert Wiener."
+    },
+    "sources": [{ "name": "Proposition de l'atelier de Dartmouth", "date": "1955" }]
+  },
+  {
+    "id": "hist-eliza",
+    "type": "notion",
+    "theme": "ia-histoire",
+    "difficulty": 1,
+    "payload": {
+      "term": "L'effet ELIZA",
+      "definition": "Tendance humaine à prêter une compréhension réelle à un système qui ne fait que reformuler.",
+      "example": "En 1966, ELIZA simulait un psychothérapeute par simple retournement de phrases. Son créateur Joseph Weizenbaum fut troublé de voir des utilisateurs s'y confier sincèrement, en sachant pourtant comment le programme fonctionnait.",
+      "pitfall": "Croire que l'effet a disparu avec les modèles modernes. Il s'est amplifié : plus la réponse est fluide, plus la projection est forte."
+    },
+    "sources": [{ "name": "J. Weizenbaum, Communications of the ACM", "date": "1966" }]
+  },
+  {
+    "id": "hist-perceptrons-1969",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Quelle limite mathématique démontrée en 1969 a contribué à geler la recherche sur les réseaux de neurones pendant une décennie ?",
+      "options": [
+        "L'impossibilité de dépasser 1000 neurones sur le matériel de l'époque",
+        "L'incapacité d'un perceptron à une couche à résoudre la fonction XOR",
+        "La non-convergence de l'algorithme d'apprentissage sur données bruitées",
+        "L'impossibilité de représenter des nombres réels en mémoire"
+      ],
+      "correctIndex": 1,
+      "explanation": "Minsky et Papert le démontrent dans « Perceptrons ». La limite ne valait que pour une seule couche, mais l'ouvrage a durablement découragé les financements — l'un des déclencheurs du premier hiver de l'IA."
+    },
+    "sources": [{ "name": "Minsky & Papert, Perceptrons", "date": "1969" }]
+  },
+  {
+    "id": "hist-hivers",
+    "type": "notion",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "term": "Les hivers de l'IA",
+      "definition": "Deux périodes d'effondrement des financements et de l'intérêt pour l'IA, après des promesses non tenues.",
+      "example": "Le premier hiver (1974-1980) suit l'échec de la traduction automatique et du raisonnement général. Le second (1987-1993) suit l'effondrement du marché des machines LISP et la déception des systèmes experts.",
+      "pitfall": "Y voir des échecs de la technologie. Ce sont des échecs de calendrier : les idées étaient souvent justes, mais les données et la puissance de calcul manquaient de trente ans."
+    },
+    "sources": [{ "name": "Historiographie standard de l'IA" }]
+  },
+  {
+    "id": "hist-deepblue",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 1,
+    "payload": {
+      "question": "Quand Deep Blue bat Kasparov en 1997, sur quoi repose sa victoire ?",
+      "options": [
+        "Sur un apprentissage à partir de millions de parties humaines",
+        "Sur l'exploration par force brute de millions de positions par seconde",
+        "Sur un réseau de neurones profond entraîné par renforcement",
+        "Sur une compréhension stratégique acquise par auto-apprentissage"
+      ],
+      "correctIndex": 1,
+      "explanation": "Deep Blue combinait une recherche exhaustive et une fonction d'évaluation écrite par des humains, dont des grands maîtres. Aucun apprentissage automatique n'était en jeu : c'est une victoire du calcul, pas de l'IA au sens actuel."
+    },
+    "sources": [{ "name": "IBM Research", "date": "1997" }]
+  },
+  {
+    "id": "hist-alexnet",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Quel événement de 2012 est considéré comme le point de bascule du deep learning ?",
+      "options": [
+        "La sortie du premier GPU dédié à l'apprentissage automatique",
+        "La victoire d'AlexNet au concours de reconnaissance d'images ImageNet",
+        "La publication de l'architecture Transformer",
+        "Le lancement de Google Brain"
+      ],
+      "correctIndex": 1,
+      "explanation": "AlexNet, de Krizhevsky, Sutskever et Hinton, l'emporte avec une marge inédite. Trois ingrédients convergent : de vastes bases annotées, des GPU, et des réseaux profonds. Le domaine bascule en quelques mois."
+    },
+    "sources": [{ "name": "Krizhevsky, Sutskever, Hinton — NeurIPS", "date": "2012" }]
+  },
+  {
+    "id": "hist-alphago-37",
+    "type": "notion",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "term": "Le coup 37",
+      "definition": "Coup joué par AlphaGo contre Lee Sedol en mars 2016, jugé aberrant sur le moment, décisif à l'arrivée.",
+      "example": "Les commentateurs professionnels l'ont d'abord pris pour une erreur. Il s'est révélé être le pivot de la partie. AlphaGo l'emporta 4 à 1 sur l'ensemble du match.",
+      "pitfall": "Y voir de la créativité au sens humain. C'est une stratégie absente du répertoire humain parce qu'elle a été découverte par auto-jeu, sans passer par la tradition du go."
+    },
+    "sources": [{ "name": "DeepMind", "date": "mars 2016" }]
+  },
+  {
+    "id": "hist-transformer",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "question": "Qu'apporte l'architecture Transformer publiée en 2017 ?",
+      "options": [
+        "Elle remplace la récurrence par le seul mécanisme d'attention, rendant l'entraînement parallélisable",
+        "Elle permet d'entraîner des modèles sans aucune donnée annotée",
+        "Elle réduit la taille des modèles d'un facteur dix",
+        "Elle introduit la génération d'images à partir de texte"
+      ],
+      "correctIndex": 0,
+      "explanation": "« Attention Is All You Need » abandonne le traitement séquentiel. Les positions se traitent en parallèle, ce qui rend exploitables des corpus et des tailles de modèles jusque-là hors d'atteinte. C'est l'article fondateur de tout ce qui suit."
+    },
+    "sources": [{ "name": "Vaswani et al., Google — NeurIPS", "date": "2017" }]
+  },
+  {
+    "id": "hist-chatgpt",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 1,
+    "payload": {
+      "question": "En quoi la sortie de ChatGPT en novembre 2022 constitue-t-elle une rupture ?",
+      "options": [
+        "Elle introduit une architecture entièrement nouvelle",
+        "Elle marque la première IA capable de tenir une conversation",
+        "Elle rend accessible au grand public une technologie qui existait déjà",
+        "Elle est le premier modèle entraîné sur des données publiques"
+      ],
+      "correctIndex": 2,
+      "explanation": "La rupture est d'interface, pas de technique. Le modèle sous-jacent reposait sur des travaux de 2017-2020. Ce qui change, c'est qu'une conversation en langage courant suffit désormais à s'en servir."
+    },
+    "sources": [{ "name": "OpenAI", "date": "novembre 2022" }]
+  },
+  {
+    "id": "hist-nobel-2024",
+    "type": "question",
+    "theme": "ia-histoire",
+    "difficulty": 3,
+    "payload": {
+      "question": "En 2024, quels prix Nobel ont récompensé des travaux liés à l'IA ?",
+      "options": [
+        "Physique uniquement",
+        "Chimie uniquement",
+        "Physique et chimie",
+        "Physique, chimie et médecine"
+      ],
+      "correctIndex": 2,
+      "explanation": "Le Nobel de physique est allé à John Hopfield et Geoffrey Hinton pour les fondements des réseaux de neurones ; celui de chimie à Demis Hassabis et John Jumper pour AlphaFold, ainsi qu'à David Baker pour la conception de protéines."
+    },
+    "sources": [{ "name": "Académie royale des sciences de Suède", "date": "2024" }]
+  },
+  {
+    "id": "hist-alphafold",
+    "type": "notion",
+    "theme": "ia-histoire",
+    "difficulty": 2,
+    "payload": {
+      "term": "AlphaFold",
+      "definition": "Système qui prédit la structure tridimensionnelle d'une protéine à partir de sa séquence d'acides aminés.",
+      "example": "En 2020, AlphaFold 2 obtient au concours CASP14 des résultats comparables à l'expérimentation, sur un problème resté ouvert environ cinquante ans.",
+      "pitfall": "Croire que le repliement des protéines est « résolu ». Les prédictions restent moins fiables sur les protéines désordonnées et les complexes multiprotéiques."
+    },
+    "sources": [{ "name": "DeepMind, CASP14", "date": "2020" }]
+  }
+]

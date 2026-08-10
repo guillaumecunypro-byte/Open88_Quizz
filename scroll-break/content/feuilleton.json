@@ -1,0 +1,57 @@
+[
+  {
+    "id": "serial-001",
+    "type": "serial",
+    "theme": "feuilleton",
+    "difficulty": 1,
+    "payload": {
+      "episode": 1,
+      "title": "Hanover, été 1956",
+      "text": "Ils sont onze dans une salle du dernier étage, et il fait une chaleur à décourager n'importe quelle idée neuve. McCarthy a écrit dans la demande de financement que deux mois suffiraient. Deux mois, dix hommes, et l'on saurait faire une machine qui utilise le langage, forme des abstractions, résout des problèmes réservés jusque-là aux humains. La fondation Rockefeller a versé la moitié de la somme demandée, ce qui est peut-être la première évaluation lucide du projet. Personne dans la salle ne le sait encore, mais l'un des mots inscrits sur la porte tiendra soixante-dix ans, et pas la promesse."
+    }
+  },
+  {
+    "id": "serial-002",
+    "type": "serial",
+    "theme": "feuilleton",
+    "difficulty": 1,
+    "payload": {
+      "episode": 2,
+      "title": "Le mot",
+      "text": "McCarthy a choisi « intelligence artificielle » un peu contre tout le monde. Le terme était laid, il le savait. Mais « cybernétique » appartenait à Wiener, et travailler sous une bannière tenue par Wiener signifiait travailler avec Wiener. Il fallait donc un mot neuf, assez large pour couvrir des travaux qui n'avaient pas encore de forme, assez ambitieux pour attirer de l'argent. Shannon, plus prudent, trouvait le mot présomptueux. Il proposait quelque chose sur les automates. On vota sans voter, comme souvent entre gens qui se respectent, et le mot présomptueux l'emporta."
+    }
+  },
+  {
+    "id": "serial-003",
+    "type": "serial",
+    "theme": "feuilleton",
+    "difficulty": 1,
+    "payload": {
+      "episode": 3,
+      "title": "Ce qu'ils croyaient tenir",
+      "text": "Newell et Simon arrivent avec quelque chose de concret, et c'est presque un problème. Leur programme démontre des théorèmes de logique, et pour l'un d'eux il trouve une démonstration plus courte que celle du manuel. Simon annonce à ses étudiants qu'ils ont inventé une machine qui pense. Il le pense vraiment. Il écrira plus tard qu'en vingt ans les machines feraient tout ce qu'un homme peut faire. L'erreur n'était pas dans l'observation, elle était dans l'extrapolation : ils venaient de résoudre le problème facile, et ils l'ont pris pour le début du problème difficile."
+    }
+  },
+  {
+    "id": "serial-004",
+    "type": "serial",
+    "theme": "feuilleton",
+    "difficulty": 1,
+    "payload": {
+      "episode": 4,
+      "title": "Rosenblatt",
+      "text": "L'année suivante, à Cornell, Frank Rosenblatt construit une machine qui apprend. Pas qui suit des règles : qui apprend. On lui montre des cartes perforées, elle se trompe, on corrige, elle ajuste ses poids, et au bout d'un moment elle ne se trompe plus. Le New York Times écrit que la marine américaine attend une machine capable de marcher, parler, voir et se reproduire. Rosenblatt n'a pas exactement démenti. Dans une autre pièce du même monde, un jeune homme du nom de Minsky lit l'article et commence à préparer une objection qui mettra douze ans à paraître."
+    }
+  },
+  {
+    "id": "serial-005",
+    "type": "serial",
+    "theme": "feuilleton",
+    "difficulty": 1,
+    "payload": {
+      "episode": 5,
+      "title": "Le livre",
+      "text": "1969. Minsky et Papert publient un ouvrage court, rigoureux, et dévastateur. Ils démontrent qu'un perceptron à une seule couche ne peut pas apprendre la fonction XOR — un problème qu'un enfant résout en trois secondes. La démonstration est juste. La conclusion qu'on en tire ne l'est pas : la limite ne vaut que pour une couche, et personne n'a démontré qu'on ne saurait pas en empiler plusieurs. Mais les crédits ne lisent pas les notes de bas de page. Rosenblatt meurt deux ans plus tard dans un accident de bateau, à quarante-trois ans. L'hiver commence."
+    }
+  }
+]
