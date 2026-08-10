@@ -45,6 +45,7 @@ content/
   ia-idees-recues.json
   ia-reglementaire.json
   feuilleton.json
+  briefs-local.json     briefs de secours, remplacés dès que n8n répond
 n8n/
   workflow-deck-quotidien.json
 docs/

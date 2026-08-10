@@ -1,0 +1,90 @@
+[
+  {
+    "id": "brief-local-neurone-formel",
+    "type": "brief",
+    "theme": "histoire",
+    "difficulty": 1,
+    "payload": {
+      "title": "1943 : le neurone formel précède l'ordinateur",
+      "body": "Warren McCulloch et Walter Pitts publient un modèle mathématique du neurone. C'est l'acte de naissance des réseaux de neurones artificiels, quinze ans avant le premier ordinateur capable de les faire tourner."
+    },
+    "sources": [{ "name": "McCulloch et Pitts", "date": "1943" }]
+  },
+  {
+    "id": "brief-local-systemes-experts",
+    "type": "brief",
+    "theme": "histoire",
+    "difficulty": 2,
+    "payload": {
+      "title": "Les systèmes experts ont marché, puis coûté trop cher",
+      "body": "Dans les années 1980, MYCIN diagnostique des infections bactériennes et XCON configure des ordinateurs pour Digital Equipment, à partir de règles écrites par des humains. Ils fonctionnent, mais coûtent cher à maintenir et ne généralisent pas."
+    },
+    "sources": [{ "name": "MYCIN et XCON", "date": "années 1980" }]
+  },
+  {
+    "id": "brief-local-retropropagation",
+    "type": "brief",
+    "theme": "histoire",
+    "difficulty": 2,
+    "payload": {
+      "title": "1986 : la rétropropagation débloque les couches",
+      "body": "Rumelhart, Hinton et Williams popularisent la rétropropagation du gradient, qui permet d'entraîner des réseaux à plusieurs couches. La méthode existait auparavant sous d'autres formes, mais c'est cette publication qui la diffuse."
+    },
+    "sources": [{ "name": "Rumelhart, Hinton et Williams", "date": "1986" }]
+  },
+  {
+    "id": "brief-local-gan",
+    "type": "brief",
+    "theme": "histoire",
+    "difficulty": 2,
+    "payload": {
+      "title": "2014 : deux réseaux entraînés l'un contre l'autre",
+      "body": "Ian Goodfellow propose les GAN, réseaux antagonistes génératifs. Deux réseaux s'entraînent l'un contre l'autre : l'un génère, l'autre discrimine."
+    },
+    "sources": [{ "name": "Ian Goodfellow", "date": "2014" }]
+  },
+  {
+    "id": "brief-local-bert-gpt1",
+    "type": "brief",
+    "theme": "histoire",
+    "difficulty": 2,
+    "payload": {
+      "title": "2018 : le Transformer se scinde en deux lignées",
+      "body": "BERT chez Google et GPT-1 chez OpenAI appliquent l'architecture Transformer au langage, chacun dans une direction différente. Compréhension pour le premier, génération pour le second."
+    },
+    "sources": [{ "name": "Google et OpenAI", "date": "2018" }]
+  },
+  {
+    "id": "brief-local-gpt3",
+    "type": "brief",
+    "theme": "fonctionnement",
+    "difficulty": 2,
+    "payload": {
+      "title": "2020 : GPT-3 et l'apprentissage en contexte",
+      "body": "GPT-3, 175 milliards de paramètres, démontre l'apprentissage en contexte. Le modèle exécute une tâche à partir de quelques exemples placés dans la requête, sans aucun réentraînement."
+    },
+    "sources": [{ "name": "OpenAI", "date": "2020" }]
+  },
+  {
+    "id": "brief-local-gpai-2025",
+    "type": "brief",
+    "theme": "réglementaire",
+    "difficulty": 3,
+    "payload": {
+      "title": "Depuis août 2025, les modèles généralistes sont visés",
+      "body": "Les obligations de l'AI Act pour les modèles à usage général, dits GPAI, s'appliquent depuis août 2025. Elles s'ajoutent aux interdictions en vigueur depuis février 2025, dont la notation sociale."
+    },
+    "sources": [{ "name": "Règlement (UE) 2024/1689", "date": "août 2025" }]
+  },
+  {
+    "id": "brief-local-digital-omnibus",
+    "type": "brief",
+    "theme": "réglementaire",
+    "difficulty": 3,
+    "payload": {
+      "title": "Le paquet Digital Omnibus repousse le haut risque",
+      "body": "Les obligations haut risque de l'annexe III de l'AI Act sont reportées au 2 décembre 2027, celles de l'annexe I au 2 août 2028. Le calendrier initial prévoyait une application plus précoce."
+    },
+    "sources": [{ "name": "Paquet Digital Omnibus, Union européenne", "date": "2026" }]
+  }
+]
