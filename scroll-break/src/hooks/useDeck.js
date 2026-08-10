@@ -21,7 +21,10 @@ export function useDeck(progress) {
         import('../../content/ia-fonctionnement.json'),
         import('../../content/ia-reglementaire.json'),
         import('../../content/ia-idees-recues.json'),
-        import('../../content/feuilleton.json')
+        import('../../content/feuilleton.json'),
+        // Briefs de secours : servis uniquement tant que VITE_DECK_URL n'est pas
+        // branché. Dès que n8n répond, le deck distant remplace tout (voir plus bas).
+        import('../../content/briefs-local.json')
       ])
       const all = mods.flatMap((m) => m.default)
       const pools = {
