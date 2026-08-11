@@ -3,84 +3,254 @@
   "nodes": [
     {
       "parameters": { "rule": { "interval": [{ "triggerAtHour": 5, "triggerAtMinute": 30 }] } },
+      "id": "cron-0530",
       "name": "Cron 5h30",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 400]
+      "position": [-220, 400]
     },
     {
-      "parameters": { "url": "https://www.francetvinfo.fr/titres.rss" },
+      "parameters": { "url": "https://www.francetvinfo.fr/titres.rss", "options": {} },
+      "id": "rss-franceinfo",
       "name": "RSS France Info",
       "type": "n8n-nodes-base.rssFeedRead",
-      "typeVersion": 1.1,
-      "position": [460, 240]
+      "typeVersion": 1,
+      "position": [40, 240],
+      "continueOnFail": true
     },
     {
-      "parameters": { "url": "http://export.arxiv.org/rss/cs.AI" },
+      "parameters": { "url": "https://export.arxiv.org/rss/cs.AI", "options": {} },
+      "id": "rss-arxiv",
       "name": "RSS arXiv cs.AI",
       "type": "n8n-nodes-base.rssFeedRead",
-      "typeVersion": 1.1,
-      "position": [460, 400]
+      "typeVersion": 1,
+      "position": [40, 400],
+      "continueOnFail": true
     },
     {
-      "parameters": { "url": "https://hnrss.org/frontpage?points=250" },
+      "parameters": { "url": "https://hnrss.org/frontpage?points=250", "options": {} },
+      "id": "rss-hn",
       "name": "RSS Hacker News",
       "type": "n8n-nodes-base.rssFeedRead",
-      "typeVersion": 1.1,
-      "position": [460, 560]
+      "typeVersion": 1,
+      "position": [40, 560],
+      "continueOnFail": true
+    },
+    {
+      "parameters": { "numberInputs": 3 },
+      "id": "fusionner",
+      "name": "Fusionner les flux",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [280, 400]
     },
     {
       "parameters": {
-        "jsCode": "// Fenêtre 24 h + déduplication par similarité de titre.\nconst cutoff = Date.now() - 24 * 3600 * 1000;\nconst seen = new Map();\nfor (const item of $input.all()) {\n  const j = item.json;\n  const ts = new Date(j.isoDate || j.pubDate || Date.now()).getTime();\n  if (ts < cutoff) continue;\n  const key = (j.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').split(' ').slice(0, 6).join(' ');\n  if (!key) continue;\n  if (seen.has(key)) { seen.get(key).sources.push(j.link); continue; }\n  seen.set(key, { title: j.title, summary: (j.contentSnippet || '').slice(0, 600), link: j.link, sources: [j.link], date: new Date(ts).toISOString().slice(0, 10) });\n}\nreturn [...seen.values()].map(json => ({ json }));"
+        "jsCode": "// Fenêtre 24 h + regroupement par similarité de titre.\n// Ce nœud ne voit tous les flux QUE parce qu'un Merge les a réunis en amont :\n// branché directement sur les RSS, il s'exécuterait une fois par flux et ne\n// pourrait jamais compter deux sources concordantes.\nconst cutoff = Date.now() - 24 * 3600 * 1000;\nconst seen = new Map();\nfor (const item of $input.all()) {\n  const j = item.json;\n  const ts = new Date(j.isoDate || j.pubDate || Date.now()).getTime();\n  if (!Number.isFinite(ts) || ts < cutoff) continue;\n  const key = (j.title || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').split(' ').filter(Boolean).slice(0, 6).join(' ');\n  if (!key) continue;\n  if (seen.has(key)) {\n    const entry = seen.get(key);\n    if (!entry.sources.includes(j.link)) entry.sources.push(j.link);\n    continue;\n  }\n  seen.set(key, {\n    title: j.title,\n    summary: (j.contentSnippet || '').slice(0, 600),\n    link: j.link,\n    sources: [j.link],\n    date: new Date(ts).toISOString().slice(0, 10)\n  });\n}\nreturn [...seen.values()].map((json) => ({ json }));"
       },
+      "id": "dedupliquer",
       "name": "Dédupliquer",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [740, 400]
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FILTRE 1 — source primaire, ou deux sources secondaires concordantes.\n// Appliqué en code : le prompt ne décide rien ici.\nconst PRIMAIRES = [\n  'arxiv.org', 'europa.eu', 'eur-lex.europa.eu', 'cnil.fr', 'ssi.gouv.fr',\n  'legifrance.gouv.fr', 'nature.com', 'science.org', 'insee.fr', 'ec.europa.eu',\n  'anthropic.com', 'deepmind.google', 'ai.meta.com', 'mistral.ai', 'allenai.org'\n];\nconst estPrimaire = (url) => {\n  try { const h = new URL(url).hostname.replace(/^www\\./, ''); return PRIMAIRES.some((d) => h === d || h.endsWith('.' + d)); }\n  catch { return false; }\n};\n\nconst retenus = [];\nlet ecartes = 0;\nfor (const item of $input.all()) {\n  const j = item.json;\n  const primaire = estPrimaire(j.link);\n  if (primaire || j.sources.length >= 2) {\n    retenus.push({ json: { ...j, primaire, confirmations: j.sources.length } });\n  } else {\n    ecartes++;\n  }\n}\nconsole.log(`Filtre 1 : ${retenus.length} retenus, ${ecartes} écartés (source unique non primaire)`);\nreturn retenus;"
+      },
+      "id": "filtre-1",
+      "name": "Filtre 1 — concordance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": { "response": { "response": { "neverError": true, "responseFormat": "text" } }, "timeout": 15000 }
+      },
+      "id": "recuperer-source",
+      "name": "Récupérer la source",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [940, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Texte brut de chaque source, pour que le filtre 2 ait quelque chose à vérifier.\n// Sans cette étape, « le nom propre doit exister dans la source » se contrôle\n// contre un chapô RSS de 600 caractères, c'est-à-dire contre rien.\nconst items = $input.all();\nconst sortie = [];\nfor (let i = 0; i < items.length; i++) {\n  const amont = $('Filtre 1 — concordance').all()[i];\n  if (!amont) continue;\n  const brut = typeof items[i].json.data === 'string' ? items[i].json.data : '';\n  const texte = brut\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&[a-z]+;/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n  if (texte.length < 400) continue; // source illisible : on écarte plutôt que de deviner\n  sortie.push({ json: { ...amont.json, sourceText: texte.slice(0, 12000) } });\n}\nconsole.log(`Sources exploitables : ${sortie.length} / ${items.length}`);\nreturn sortie;"
+      },
+      "id": "extraire-texte",
+      "name": "Extraire le texte",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 400]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://api.anthropic.com/v1/messages",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [
-          { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
-          { "name": "anthropic-version", "value": "2023-06-01" },
-          { "name": "content-type", "value": "application/json" }
-        ]},
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 2000, system: \"Tu rédiges des cartes d'information factuelles pour une application d'apprentissage.\\n\\nRÈGLES DE VÉRIFICATION, appliquées sans exception :\\n1. Source primaire, ou deux sources secondaires concordantes. Sinon REJET.\\n2. Tout nom propre cité doit apparaître dans la source. Un modèle, une entreprise ou une personne que tu ne retrouves pas dans le texte source : REJET.\\n3. Tout chiffre doit être accompagné de l'institution qui le produit et de sa date. Sinon supprime le chiffre.\\n\\nFORMAT : titre de 60 caractères maximum, corps de 2 phrases, aucun adjectif d'appréciation, aucune formule d'accroche.\\n\\nEn cas de doute : REJET. Un deck court vaut mieux qu'un deck faux.\\n\\nRéponds uniquement en JSON : {\\\"items\\\":[{\\\"title\\\":\\\"\\\",\\\"body\\\":\\\"\\\",\\\"source\\\":\\\"\\\",\\\"date\\\":\\\"\\\"}]} — au maximum 8 items, les plus durables. Critère de sélection : ce fait aura-t-il encore un sens dans six mois ?\", messages: [{ role: 'user', content: JSON.stringify($input.all().map(i => i.json)).slice(0, 40000) }] }) }}"
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: \"Tu classes des sujets d'actualité par importance et par durabilité.\\n\\nCritère unique : ce fait aura-t-il encore un sens dans six mois ? Écarte l'anecdotique, le conjoncturel et le promotionnel.\\n\\nTu ne rédiges rien. Tu renvoies uniquement les indices retenus, au maximum 8, du plus durable au moins durable.\\n\\nRéponds uniquement en JSON : {\\\"retenus\\\":[0,3,7]}\", messages: [{ role: 'user', content: JSON.stringify($input.all().map((it, i) => ({ i, titre: it.json.title, resume: it.json.summary }))).slice(0, 30000) }] }) }}",
+        "options": {}
       },
-      "name": "Rédiger les briefs",
+      "id": "selection",
+      "name": "Sélection",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1020, 400]
+      "position": [1380, 400],
+      "executeOnce": true
     },
     {
       "parameters": {
-        "jsCode": "// Assemblage du deck. Contrôle qualité : sous 20 cartes valides, on conserve la veille.\nconst raw = $input.first().json.content?.[0]?.text || '{}';\nlet parsed;\ntry { parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()); } catch { parsed = { items: [] }; }\n\nconst briefs = (parsed.items || [])\n  .filter(i => i.title && i.body && i.source)\n  .slice(0, 8)\n  .map((i, n) => ({\n    id: `brief-${new Date().toISOString().slice(0,10)}-${n}`,\n    type: 'brief',\n    theme: 'actualite',\n    difficulty: 1,\n    payload: { title: i.title, body: i.body },\n    sources: [{ name: i.source, date: i.date }]\n  }));\n\nreturn [{ json: { date: new Date().toISOString().slice(0,10), generatedAt: new Date().toISOString(), briefs, count: briefs.length, ok: briefs.length >= 5 } }];"
+        "jsCode": "// Étape 3 du document : la sélection est un appel distinct de la rédaction.\nconst brut = $input.first().json.content?.[0]?.text || '';\nlet retenus = [];\ntry { retenus = JSON.parse(brut.replace(/```json|```/g, '').trim()).retenus || []; } catch { retenus = []; }\nconst corpus = $('Extraire le texte').all();\nconst sortie = retenus\n  .filter((i) => Number.isInteger(i) && corpus[i])\n  .slice(0, 8)\n  .map((i) => ({ json: corpus[i].json }));\nconsole.log(`Sélection : ${sortie.length} items retenus sur ${corpus.length}`);\nreturn sortie;"
       },
+      "id": "retenir",
+      "name": "Retenir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 800, system: \"Tu rédiges une carte d'information factuelle à partir d'UNE source fournie.\\n\\nFORMAT : titre de 60 caractères maximum, corps de 2 phrases exactement, aucun adjectif d'appréciation, aucune formule d'accroche.\\n\\nN'écris que ce qui figure dans la source. N'ajoute aucun nom propre, aucun chiffre et aucune date absents du texte source. En cas de doute, renvoie REJET.\\n\\nRéponds uniquement en JSON : {\\\"title\\\":\\\"\\\",\\\"body\\\":\\\"\\\",\\\"institution\\\":\\\"\\\"} ou {\\\"rejet\\\":true}. Le champ institution nomme l'organisme qui produit les chiffres cités, vide s'il n'y a aucun chiffre.\", messages: [{ role: 'user', content: ('TITRE : ' + $json.title + '\\n\\nSOURCE :\\n' + $json.sourceText).slice(0, 30000) }] }) }}",
+        "options": {}
+      },
+      "id": "rediger",
+      "name": "Rédiger",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1820, 400],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// FILTRE 2 — tout nom propre cité doit apparaître dans la source.\n// Vérification déterministe, pas une consigne : on relit la sortie du modèle\n// contre le texte réellement récupéré. C'est ce filtre qui écarte les modèles,\n// entreprises et personnes inventés.\nconst INITIAUX = new Set(['Le','La','Les','Un','Une','Des','Ce','Cette','Ces','Il','Elle','On','Selon','Depuis','Dans','Pour','Cependant','Ainsi','Enfin','Mais','Or','Donc','Au','Aux','Du','De','En','Par','Sur','Son','Sa','Ses','Leur','Leurs','Plus','Moins','Chaque','Tout','Toute','Aucun','Aucune']);\n\nconst amont = $('Retenir').all();\nconst sortie = [];\nlet rejets = 0;\n\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const src = amont[i];\n  if (!src) continue;\n  const brut = items[i].json.content?.[0]?.text || '';\n  let carte;\n  try { carte = JSON.parse(brut.replace(/```json|```/g, '').trim()); } catch { rejets++; continue; }\n  if (!carte || carte.rejet || !carte.title || !carte.body) { rejets++; continue; }\n\n  const source = src.json.sourceText.toLowerCase();\n  // On retire le premier mot de chaque phrase : en français il est capitalisé\n  // sans être un nom propre.\n  const noms = new Set();\n  for (const phrase of carte.body.split(/(?<=[.!?])\\s+/)) {\n    const mots = phrase.trim().split(/\\s+/).slice(1);\n    for (const mot of mots) {\n      const net = mot.replace(/^[^\\wÀ-ÿ]+|[^\\wÀ-ÿ]+$/g, '');\n      if (net.length >= 3 && /^[A-ZÀ-Ý]/.test(net) && !INITIAUX.has(net)) noms.add(net);\n    }\n  }\n  const absents = [...noms].filter((n) => !source.includes(n.toLowerCase()));\n  if (absents.length) {\n    console.log(`Filtre 2 — carte écartée, noms absents de la source : ${absents.join(', ')}`);\n    rejets++;\n    continue;\n  }\n  sortie.push({ json: { ...carte, link: src.json.link, sources: src.json.sources, date: src.json.date, primaire: src.json.primaire } });\n}\nconsole.log(`Filtre 2 : ${sortie.length} cartes conservées, ${rejets} écartées`);\nreturn sortie;"
+      },
+      "id": "filtre-2",
+      "name": "Filtre 2 — noms propres",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2040, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// FILTRE 3 — tout chiffre doit être accompagné de l'institution qui le produit\n// et de sa date. Sinon la carte est écartée : la règle du document dit de\n// supprimer le chiffre, mais un corps de deux phrases amputé de son chiffre\n// n'est plus la carte que le modèle a écrite.\nconst PORTEUR_DE_CHIFFRE = /\\d[\\d\\s.,]*\\s*(%|milliard|million|millier|€|M€|Md€|\\$)|\\b\\d{2,}\\b/i;\n\nconst sortie = [];\nlet rejets = 0;\nfor (const item of $input.all()) {\n  const c = item.json;\n  if (PORTEUR_DE_CHIFFRE.test(c.body)) {\n    const institution = (c.institution || '').trim();\n    if (!institution || !c.date) {\n      console.log(`Filtre 3 — carte écartée, chiffre non attribué : ${c.title}`);\n      rejets++;\n      continue;\n    }\n  }\n  if (c.title.length > 60) {\n    console.log(`Filtre 3 — carte écartée, titre de ${c.title.length} caractères : ${c.title}`);\n    rejets++;\n    continue;\n  }\n  sortie.push({ json: c });\n}\nconsole.log(`Filtre 3 : ${sortie.length} cartes conservées, ${rejets} écartées`);\nreturn sortie;"
+      },
+      "id": "filtre-3",
+      "name": "Filtre 3 — chiffres attribués",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2260, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Assemblage. L'app reçoit des briefs, pas un deck complet : le corpus statique\n// et l'assemblage (ratio, alternance, répétition espacée) vivent dans\n// src/lib/deckBuilder.js, où ils sont versionnés et couverts par npm run check.\n// n8n ne fait que ce que lui seul peut faire — aller chercher l'actualité.\nconst jour = new Date().toISOString().slice(0, 10);\nconst briefs = $input.all().map((item, n) => {\n  const c = item.json;\n  const source = { name: c.institution || new URL(c.link).hostname.replace(/^www\\./, ''), date: c.date };\n  return {\n    id: `brief-${jour}-${n}`,\n    type: 'brief',\n    theme: 'actualite',\n    difficulty: 1,\n    payload: { title: c.title, body: c.body },\n    sources: [source],\n    confirmations: c.sources.length,\n    primaire: c.primaire\n  };\n});\n\n// Persistance entre exécutions : le webhook sert ce que le cron a produit.\nconst store = $getWorkflowStaticData('global');\nif (briefs.length >= 5) {\n  store.deck = { date: jour, generatedAt: new Date().toISOString(), briefs };\n}\n\nreturn [{ json: { date: jour, count: briefs.length, suffisant: briefs.length >= 5, briefs } }];"
+      },
+      "id": "assembler",
       "name": "Assembler",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1300, 400]
+      "position": [2480, 400]
     },
     {
-      "parameters": { "path": "scroll-break-deck", "responseMode": "lastNode" },
+      "parameters": {
+        "conditions": {
+          "options": { "version": 2, "caseSensitive": true, "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "assez-de-briefs",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 5,
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "controle",
+      "name": "Contrôle",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2700, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Moins de 5 briefs valides : on ne publie pas. Le deck de la veille reste en\n// place dans le store, et l'app complète depuis son corpus local — la\n// dégradation est silencieuse côté utilisateur, bruyante côté logs.\nconst j = $input.first().json;\nconsole.warn(`ALERTE Scroll Break — ${j.count} brief(s) valide(s) le ${j.date}, publication refusée. Le deck précédent est conservé.`);\nreturn [{ json: { alerte: true, date: j.date, count: j.count } }];"
+      },
+      "id": "alerte",
+      "name": "Alerte — deck non publié",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2920, 520]
+    },
+    {
+      "parameters": { "path": "scroll-break-deck", "responseMode": "lastNode", "options": {} },
+      "id": "webhook-deck",
       "name": "Webhook deck",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [1580, 400]
+      "position": [2480, 800]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Un nœud webhook est un déclencheur, pas une sortie : il ne peut pas recevoir\n// le résultat de la branche cron. Il lit donc ce que le cron a déposé.\nconst store = $getWorkflowStaticData('global');\nreturn [{ json: store.deck || { date: null, briefs: [] } }];"
+      },
+      "id": "servir-deck",
+      "name": "Servir le deck",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2700, 800]
     }
   ],
   "connections": {
-    "Cron 5h30": { "main": [[{ "node": "RSS France Info", "type": "main", "index": 0 }, { "node": "RSS arXiv cs.AI", "type": "main", "index": 0 }, { "node": "RSS Hacker News", "type": "main", "index": 0 }]] },
-    "RSS France Info": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
-    "RSS arXiv cs.AI": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
-    "RSS Hacker News": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
-    "Dédupliquer": { "main": [[{ "node": "Rédiger les briefs", "type": "main", "index": 0 }]] },
-    "Rédiger les briefs": { "main": [[{ "node": "Assembler", "type": "main", "index": 0 }]] }
+    "Cron 5h30": {
+      "main": [
+        [
+          { "node": "RSS France Info", "type": "main", "index": 0 },
+          { "node": "RSS arXiv cs.AI", "type": "main", "index": 0 },
+          { "node": "RSS Hacker News", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "RSS France Info": { "main": [[{ "node": "Fusionner les flux", "type": "main", "index": 0 }]] },
+    "RSS arXiv cs.AI": { "main": [[{ "node": "Fusionner les flux", "type": "main", "index": 1 }]] },
+    "RSS Hacker News": { "main": [[{ "node": "Fusionner les flux", "type": "main", "index": 2 }]] },
+    "Fusionner les flux": { "main": [[{ "node": "Dédupliquer", "type": "main", "index": 0 }]] },
+    "Dédupliquer": { "main": [[{ "node": "Filtre 1 — concordance", "type": "main", "index": 0 }]] },
+    "Filtre 1 — concordance": { "main": [[{ "node": "Récupérer la source", "type": "main", "index": 0 }]] },
+    "Récupérer la source": { "main": [[{ "node": "Extraire le texte", "type": "main", "index": 0 }]] },
+    "Extraire le texte": { "main": [[{ "node": "Sélection", "type": "main", "index": 0 }]] },
+    "Sélection": { "main": [[{ "node": "Retenir", "type": "main", "index": 0 }]] },
+    "Retenir": { "main": [[{ "node": "Rédiger", "type": "main", "index": 0 }]] },
+    "Rédiger": { "main": [[{ "node": "Filtre 2 — noms propres", "type": "main", "index": 0 }]] },
+    "Filtre 2 — noms propres": { "main": [[{ "node": "Filtre 3 — chiffres attribués", "type": "main", "index": 0 }]] },
+    "Filtre 3 — chiffres attribués": { "main": [[{ "node": "Assembler", "type": "main", "index": 0 }]] },
+    "Assembler": { "main": [[{ "node": "Contrôle", "type": "main", "index": 0 }]] },
+    "Contrôle": { "main": [[], [{ "node": "Alerte — deck non publié", "type": "main", "index": 0 }]] },
+    "Webhook deck": { "main": [[{ "node": "Servir le deck", "type": "main", "index": 0 }]] }
   },
-  "settings": {}
+  "settings": { "executionOrder": "v1" }
 }
