@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "node scripts/check-deck.js"
+    "check": "node scripts/check-deck.js && node scripts/check-n8n.js"
   },
   "dependencies": {
     "react": "^18.3.1",
