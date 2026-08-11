@@ -13,6 +13,12 @@ npm run dev
 
 L'application tourne immédiatement avec le corpus local de `content/`. Aucune configuration requise pour l'étape 1.
 
+```bash
+npm run check
+```
+
+Rejoue l'assemblage du deck sur une année de dates et contrôle le corpus : ratio, alternance des types, sources obligatoires, longueur des titres, répétition espacée. À lancer après toute modification de `content/` ou de `deckBuilder.js`.
+
 ## Configuration
 
 | Variable | Rôle |

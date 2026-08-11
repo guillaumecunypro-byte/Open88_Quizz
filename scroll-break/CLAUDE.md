@@ -46,6 +46,8 @@ content/
   ia-reglementaire.json
   feuilleton.json
   briefs-local.json     briefs de secours, remplacés dès que n8n répond
+scripts/
+  check-deck.js         contrôles du corpus et de l'assemblage — npm run check
 n8n/
   workflow-deck-quotidien.json
 docs/
