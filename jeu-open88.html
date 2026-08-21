@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu OPEN 88 — À la découverte de l'IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cdg-bleu:#272A5F; --cdg-bleu-dark:#1B1E45; --cdg-bleu-10:#EAEAF3;
+  --cdg-rose:#E94059; --cdg-rose-dark:#C42E46;
+  --cdg-orange:#F7A720; --cdg-orange-dark:#D4880A;
+  --cdg-white:#FFFFFF; --cdg-gray-50:#F8F8F8; --cdg-gray-200:#E5E5E5;
+  --cdg-gray-500:#888888; --cdg-gray-800:#222222;
+  --font-main:'Barlow','Calibri',Arial,sans-serif;
+  --shadow-md:0 4px 16px rgba(39,42,95,0.12);
+  --shadow-lg:0 8px 32px rgba(39,42,95,0.15);
+  --transition-base:0.2s ease;
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+  --vert:#1E9E5A; --vert-bg:#E4F5EC; --rouge-bg:#FCE8EC;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; font-family:var(--font-main); color:var(--cdg-gray-800); background:var(--cdg-bleu); }
+body { font-size:clamp(16px,1.4vw,22px); line-height:1.4; overflow-x:hidden; }
+button { font-family:var(--font-main); cursor:pointer; border:none; }
+
+#app { min-height:100vh; display:flex; flex-direction:column; }
+.screen { display:none; flex:1; flex-direction:column; min-height:100vh; }
+.screen.active { display:flex; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .screen.active { animation:fadeSlide 0.35s ease; }
+  @keyframes fadeSlide { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
+  @keyframes popIn { from{opacity:0;transform:scale(0.92) translateY(14px);} to{opacity:1;transform:scale(1) translateY(0);} }
+  @keyframes scorePop { 0%{transform:scale(1);} 35%{transform:scale(1.4);} 100%{transform:scale(1);} }
+  @keyframes correctGlow { 0%{box-shadow:0 0 0 0 rgba(30,158,90,0.55);} 100%{box-shadow:0 0 0 22px rgba(30,158,90,0);} }
+  @keyframes shake { 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-9px);} 40%,60%{transform:translateX(9px);} }
+  @keyframes badgePop { 0%{opacity:0;transform:scale(0.4) rotate(-6deg);} 60%{opacity:1;transform:scale(1.12) rotate(2deg);} 100%{transform:scale(1) rotate(0);} }
+  @keyframes diceSpin { 0%{transform:rotate(0) scale(1);} 50%{transform:rotate(200deg) scale(1.15);} 100%{transform:rotate(360deg) scale(1);} }
+  @keyframes pawnHop { 0%{transform:translateY(0);} 50%{transform:translateY(-40%);} 100%{transform:translateY(0);} }
+  @keyframes confettiFall { 0%{transform:translateY(-12vh) rotate(0);opacity:1;} 100%{transform:translateY(105vh) rotate(720deg);opacity:.9;} }
+  @keyframes cellPulse { 0%,100%{box-shadow:0 0 0 0 rgba(247,167,32,0.6);} 50%{box-shadow:0 0 0 10px rgba(247,167,32,0);} }
+  .tf-btn,.mc-btn { animation:popIn 0.45s var(--spring) both; }
+  .tf-btn:nth-of-type(2){animation-delay:.1s;}
+  .mc-btn:nth-of-type(2){animation-delay:.08s;} .mc-btn:nth-of-type(3){animation-delay:.16s;} .mc-btn:nth-of-type(4){animation-delay:.24s;}
+  .score-box.bump #g-score { display:inline-block; animation:scorePop 0.5s ease; }
+  .answer-correct.glow { animation:correctGlow 0.7s ease-out; }
+  .answer-wrong.shake { animation:shake 0.5s ease; }
+  .badge-win,.badge-encourage { animation:badgePop 0.6s 0.3s ease both; }
+  .cell.current { animation:cellPulse 1.4s ease-in-out infinite; }
+  .dice.spin { animation:diceSpin 0.6s ease; }
+  .modal.show .modal-box { animation:popIn 0.4s var(--spring) both; }
+}
+
+/* ---------- Blue screens ---------- */
+.screen--blue { background:radial-gradient(120% 120% at 80% 0%, #30346f 0%, var(--cdg-bleu) 55%, var(--cdg-bleu-dark) 100%); color:var(--cdg-white); position:relative; overflow:hidden; }
+.screen--dark { background:radial-gradient(120% 120% at 20% 0%, #24285a 0%, var(--cdg-bleu-dark) 60%, #14163a 100%); }
+.watermark { position:absolute; bottom:-6vw; right:2vw; font-size:42vw; font-weight:700; color:rgba(255,255,255,0.04); line-height:1; pointer-events:none; user-select:none; z-index:0; }
+.blue-content { position:relative; z-index:1; flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:4vh 5vw; gap:2.2vh; }
+.deco-bar { height:10px; width:220px; background:linear-gradient(90deg,var(--cdg-rose) 33%,var(--cdg-orange) 33%); }
+.brand-tag { display:inline-block; background:var(--cdg-rose); color:var(--cdg-white); font-weight:700; letter-spacing:0.12em; text-transform:uppercase; font-size:clamp(13px,1vw,18px); padding:6px 16px; }
+h1.title { font-size:clamp(32px,5.2vw,84px); font-weight:700; line-height:1.05; color:var(--cdg-white); max-width:20ch; }
+.subtitle { font-size:clamp(18px,2.2vw,32px); font-weight:500; color:var(--cdg-orange); max-width:36ch; }
+
+.themes-legend { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; max-width:900px; margin-top:1vh; }
+.legend-chip { display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); padding:8px 14px; font-size:clamp(13px,1.1vw,18px); }
+.legend-dot { width:16px; height:16px; }
+
+/* ---------- Page Règles ---------- */
+.rules-scroll { flex:1; overflow-y:auto; padding:clamp(20px,4vh,48px) 5vw; display:flex; justify-content:center; position:relative; z-index:1; }
+.rules-inner { max-width:1040px; width:100%; display:flex; flex-direction:column; gap:20px; align-items:flex-start; text-align:left; }
+.rules-inner .brand-tag, .rules-inner .title, .rules-inner .deco-bar { align-self:center; }
+.rules-inner .title { font-size:clamp(28px,4vw,58px); }
+.rule-section { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); border-left:5px solid var(--cdg-orange); padding:18px 26px; width:100%; }
+.rule-section h3 { color:var(--cdg-orange); font-size:clamp(18px,1.8vw,28px); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:12px; }
+.rule-section p { font-size:clamp(15px,1.4vw,22px); color:#fff; line-height:1.55; }
+.rule-section ul { list-style:none; display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.rule-section li { font-size:clamp(15px,1.4vw,22px); color:#fff; line-height:1.5; padding-left:26px; position:relative; }
+.rule-section li::before { content:"▸"; position:absolute; left:0; color:var(--cdg-rose); font-weight:700; }
+.rule-hl { background:var(--cdg-orange); color:var(--cdg-bleu-dark); font-weight:700; padding:1px 8px; }
+.rule-hl-rose { background:var(--cdg-rose); color:#fff; font-weight:700; padding:1px 8px; }
+.case-list { list-style:none; display:flex; flex-direction:column; gap:14px; }
+.case-list li { display:flex; gap:14px; align-items:flex-start; padding-left:0; }
+.case-list li::before { content:none; }
+.case-badge { flex:0 0 auto; width:clamp(42px,4vw,56px); height:clamp(42px,4vw,56px); display:flex; align-items:center; justify-content:center; font-size:clamp(20px,2.2vw,30px); border:3px dashed var(--cdg-rose); background:rgba(255,255,255,0.08); }
+.case-badge.solid { border-style:solid; border-color:var(--cdg-orange); }
+.case-txt b { color:var(--cdg-orange); }
+.types-row { display:flex; flex-wrap:wrap; gap:10px; }
+.type-chip { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); padding:8px 16px; font-weight:600; font-size:clamp(14px,1.3vw,20px); }
+
+/* ---------- Choix d'avatar d'équipe ---------- */
+.avatar-wrap { display:flex; flex-direction:column; gap:10px; align-items:center; }
+.avatar-wrap label { font-size:clamp(15px,1.3vw,22px); color:var(--cdg-white); font-weight:500; }
+.avatar-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:680px; }
+.avatar-btn { width:clamp(48px,4.5vw,64px); height:clamp(48px,4.5vw,64px); font-size:clamp(26px,2.6vw,38px); background:rgba(255,255,255,0.08); border:3px solid rgba(255,255,255,0.2); border-radius:0; display:flex; align-items:center; justify-content:center; transition:all var(--transition-base); padding:0; }
+.avatar-btn:hover { background:rgba(255,255,255,0.18); transform:translateY(-2px); }
+.avatar-btn.selected { border-color:var(--cdg-orange); background:var(--cdg-orange); }
+.avatar-btn.taken { opacity:0.35; }
+
+/* ---------- Inputs / Buttons ---------- */
+.group-input-wrap { display:flex; flex-direction:column; gap:10px; align-items:center; margin-top:1vh; }
+.group-input-wrap label { font-size:clamp(15px,1.3vw,22px); color:var(--cdg-white); font-weight:500; }
+input.group-input { border-radius:0; border:3px solid var(--cdg-orange); background:var(--cdg-white); color:var(--cdg-gray-800); font-size:clamp(20px,2vw,30px); font-weight:600; padding:12px 20px; text-align:center; width:min(90vw,460px); outline:none; transition:border-color var(--transition-base),box-shadow var(--transition-base); }
+input.group-input:focus { border-color:var(--cdg-rose); box-shadow:0 0 0 4px rgba(233,64,89,0.25); }
+
+.btn { border-radius:0; font-weight:600; font-size:clamp(17px,1.6vw,26px); padding:16px 34px; color:var(--cdg-white); background:var(--cdg-bleu); transition:background var(--transition-base),transform var(--transition-base),box-shadow var(--transition-base); box-shadow:var(--shadow-md); }
+.btn:hover:not(:disabled) { background:var(--cdg-bleu-dark); transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.btn:active { transform:translateY(1px); }
+.btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn--orange { background:var(--cdg-orange); color:var(--cdg-bleu-dark); }
+.btn--orange:hover:not(:disabled) { background:var(--cdg-orange-dark); }
+.btn--secondary { background:var(--cdg-rose); }
+.btn--secondary:hover:not(:disabled) { background:var(--cdg-rose-dark); }
+.btn--ghost { background:transparent; color:var(--cdg-gray-500); box-shadow:none; border:2px solid var(--cdg-gray-200); font-size:clamp(14px,1.2vw,19px); padding:12px 22px; }
+.btn--ghost:hover:not(:disabled) { background:var(--cdg-gray-50); color:var(--cdg-gray-800); transform:translateY(-2px); }
+.btn--big { font-size:clamp(20px,2.2vw,34px); padding:20px 48px; }
+.btn-row { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; align-items:center; }
+
+/* ---------- Recap ---------- */
+.recap { width:min(92vw,780px); margin-top:2vh; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); padding:18px 22px; }
+.recap h3 { color:var(--cdg-orange); font-size:clamp(16px,1.4vw,24px); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; }
+.recap table { width:100%; border-collapse:collapse; color:var(--cdg-white); }
+.recap th,.recap td { text-align:left; padding:10px 8px; font-size:clamp(14px,1.2vw,20px); border-bottom:1px solid rgba(255,255,255,0.12); }
+.recap th { color:var(--cdg-orange); font-weight:600; text-transform:uppercase; font-size:clamp(12px,1vw,16px); letter-spacing:0.05em; }
+.recap td.score { font-weight:700; }
+.recap .win { color:var(--cdg-orange); }
+.recap tr.just-played td { background:rgba(247,167,32,0.12); }
+
+/* ---------- Game header ---------- */
+.g-header { background:var(--cdg-bleu); color:var(--cdg-white); border-bottom:4px solid var(--cdg-rose); padding:14px clamp(20px,4vw,50px); display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; }
+.g-team { font-weight:700; font-size:clamp(18px,1.8vw,28px); }
+.g-team .chip { display:inline-block; background:var(--cdg-rose); border-radius:9999px; padding:3px 14px; font-size:clamp(13px,1.1vw,18px); margin-right:10px; }
+.g-stats { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.g-pill { font-weight:600; font-size:clamp(15px,1.4vw,24px); background:var(--cdg-bleu-dark); padding:6px 18px; }
+.g-pill .n { color:var(--cdg-orange); font-weight:700; }
+.score-box { border-left:5px solid var(--cdg-orange); }
+
+/* Badges d'effets actifs (double ou rien, indice) */
+.g-effects { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.fx-badge { font-weight:700; font-size:clamp(12px,1.1vw,17px); padding:5px 14px; border-radius:9999px; }
+.fx-double { background:var(--cdg-rose); color:#fff; }
+.fx-hint { background:var(--cdg-orange); color:var(--cdg-bleu-dark); }
+/* Correction discrète du score par l'animateur */
+.score-adj { display:flex; gap:4px; }
+.score-adj button { background:transparent; border:1px solid rgba(255,255,255,0.25); color:rgba(255,255,255,0.55); width:28px; height:28px; font-size:16px; font-weight:700; line-height:1; padding:0; border-radius:0; }
+.score-adj button:hover { background:rgba(255,255,255,0.12); color:#fff; }
+
+/* Podium de clôture */
+.podium-list { width:min(92vw,780px); display:flex; flex-direction:column; gap:10px; margin-top:1vh; }
+.podium-row { display:flex; align-items:center; gap:16px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.16); padding:12px 22px; text-align:left; }
+.podium-row .rank { font-size:clamp(22px,2.4vw,38px); width:1.6em; }
+.podium-row .name { flex:1; font-weight:700; font-size:clamp(18px,1.9vw,30px); }
+.podium-row .pts { font-weight:700; color:var(--cdg-orange); font-size:clamp(18px,1.9vw,30px); white-space:nowrap; }
+.podium-row .tags { font-size:clamp(13px,1.2vw,19px); white-space:nowrap; }
+.podium-row.first { border-color:var(--cdg-orange); background:rgba(247,167,32,0.15); }
+.best-line { font-size:clamp(16px,1.6vw,26px); color:var(--cdg-white); }
+.best-line b { color:var(--cdg-orange); }
+
+/* ---------- Board ---------- */
+.board-wrap { flex:1; background:var(--cdg-white); padding:clamp(16px,3vh,40px) clamp(16px,4vw,60px); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2vh; }
+.board { display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(5,1fr); gap:clamp(6px,0.8vw,12px); width:min(94vw,1080px); aspect-ratio:7/5; }
+.cell { border:3px solid var(--cdg-gray-200); background:var(--cdg-white); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:4px; font-weight:700; font-size:clamp(9px,0.9vw,15px); position:relative; line-height:1.1; overflow:hidden; }
+.cell.theme { color:#fff; border-color:rgba(0,0,0,0.15); }
+.cell .cell-ico { font-size:clamp(14px,1.6vw,26px); }
+.cell.special { background:var(--cdg-gray-50); color:var(--cdg-bleu); border:3px dashed var(--cdg-rose); }
+.cell.start { background:var(--cdg-bleu); color:#fff; border-color:var(--cdg-orange); }
+.cell.current { outline:5px solid var(--cdg-orange); outline-offset:1px; z-index:3; }
+.pawn { position:absolute; top:3px; right:3px; width:clamp(24px,2.4vw,40px); height:clamp(24px,2.4vw,40px); border-radius:9999px; background:#fff; border:2px solid var(--cdg-orange); box-shadow:var(--shadow-md); z-index:4; display:flex; align-items:center; justify-content:center; font-size:clamp(14px,1.5vw,24px); line-height:1; }
+@media (prefers-reduced-motion: no-preference) { .pawn.hop { animation:pawnHop 0.28s ease; } }
+
+.center-panel { grid-column:2/7; grid-row:2/5; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.4vh; text-align:center; padding:10px; }
+.dice { font-size:clamp(60px,11vw,150px); line-height:1; color:var(--cdg-bleu); }
+.center-status { font-size:clamp(16px,1.7vw,26px); font-weight:600; color:var(--cdg-bleu); max-width:24ch; min-height:1.4em; }
+.center-theme { font-weight:700; }
+
+/* ---------- Modal ---------- */
+.modal { position:fixed; inset:0; z-index:80; display:none; align-items:center; justify-content:center; background:rgba(27,30,69,0.55); padding:20px; }
+.modal.show { display:flex; }
+.modal-box { background:#fff; width:min(94vw,760px); border-top:8px solid var(--cdg-rose); box-shadow:var(--shadow-lg); padding:clamp(24px,4vh,50px) clamp(24px,4vw,54px); text-align:center; }
+.modal-box h2 { font-size:clamp(22px,2.6vw,40px); color:var(--cdg-bleu); margin-bottom:10px; }
+.modal-theme-tag { display:inline-block; color:#fff; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; font-size:clamp(13px,1.2vw,20px); padding:6px 18px; margin-bottom:14px; }
+.modal-sub { font-size:clamp(16px,1.6vw,24px); color:var(--cdg-gray-800); margin-bottom:20px; }
+.diff-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+@media (max-width:640px){ .diff-grid{ grid-template-columns:1fr; } }
+.diff-btn { border-radius:0; border:4px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); padding:22px 14px; font-weight:700; font-size:clamp(18px,1.8vw,28px); transition:all var(--transition-base); display:flex; flex-direction:column; gap:6px; align-items:center; }
+.diff-btn:hover { background:var(--cdg-bleu-10); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.diff-btn .pts { font-size:clamp(14px,1.3vw,20px); color:var(--cdg-rose); font-weight:600; }
+.diff-btn.d1 { border-color:var(--vert); color:var(--vert); }
+.diff-btn.d2 { border-color:var(--cdg-orange); color:var(--cdg-orange-dark); }
+.diff-btn.d3 { border-color:var(--cdg-rose); color:var(--cdg-rose-dark); }
+
+/* ---------- Card / question ---------- */
+.card-head { color:#fff; padding:16px clamp(20px,4vw,50px); border-bottom:4px solid var(--cdg-rose); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.card-head .ch-theme { font-weight:700; font-size:clamp(18px,1.9vw,30px); }
+.card-head .ch-diff { font-weight:600; font-size:clamp(14px,1.4vw,22px); background:rgba(255,255,255,0.22); padding:5px 16px; }
+.card-body { flex:1; background:#fff; padding:clamp(24px,4vh,56px) clamp(20px,5vw,90px); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:clamp(22px,3.5vh,42px); }
+.card-type { font-size:clamp(12px,1vw,16px); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--cdg-rose); border:2px solid var(--cdg-rose); padding:3px 12px; }
+.card-statement { font-size:clamp(24px,3vw,48px); font-weight:600; line-height:1.25; color:var(--cdg-bleu); max-width:30ch; }
+#card-answers { width:100%; max-width:1150px; }
+.tf-buttons { display:flex; gap:clamp(16px,3vw,40px); flex-wrap:wrap; }
+.tf-btn { border-radius:0; flex:1 1 300px; min-height:clamp(110px,20vh,200px); font-size:clamp(28px,3.6vw,56px); font-weight:700; background:#fff; color:var(--cdg-bleu); border:4px solid var(--cdg-bleu); transition:all var(--transition-base); display:flex; align-items:center; justify-content:center; gap:14px; }
+.tf-btn:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.mc-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(14px,2vw,28px); width:100%; }
+@media (max-width:760px){ .mc-options{ grid-template-columns:1fr; } }
+.mc-btn { border-radius:0; border:4px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-size:clamp(18px,1.9vw,28px); font-weight:600; padding:22px; text-align:left; transition:all var(--transition-base); min-height:92px; display:flex; align-items:center; gap:14px; }
+.mc-btn:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+.mc-btn .mc-key { flex:0 0 auto; width:clamp(36px,2.8vw,50px); height:clamp(36px,2.8vw,50px); background:var(--cdg-bleu); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.mc-btn.eliminated { opacity:0.35; text-decoration:line-through; }
+.answer-correct { background:var(--vert-bg)!important; border-color:var(--vert)!important; color:var(--vert)!important; }
+.answer-correct .mc-key { background:var(--vert)!important; }
+.answer-wrong { background:var(--rouge-bg)!important; border-color:var(--cdg-rose)!important; color:var(--cdg-rose-dark)!important; }
+.answer-wrong .mc-key { background:var(--cdg-rose)!important; }
+
+/* Sélection multiple */
+.sel-hint { color:var(--cdg-gray-500); font-style:italic; font-size:clamp(15px,1.3vw,21px); width:100%; text-align:center; }
+.select-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:clamp(12px,1.6vw,22px); width:100%; }
+@media (max-width:760px){ .select-grid{ grid-template-columns:1fr; } }
+.sel-btn { border-radius:0; border:4px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-size:clamp(17px,1.8vw,26px); font-weight:600; padding:18px 20px; text-align:left; transition:all var(--transition-base); }
+.sel-btn:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.sel-btn.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+/* Nuage de mots */
+.cloud-wrap { display:flex; flex-wrap:wrap; gap:14px 24px; justify-content:center; align-items:center; width:100%; padding:8px; }
+.cloud-chip { border-radius:9999px; border:3px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-weight:700; padding:12px 28px; transition:all var(--transition-base); line-height:1.1; }
+.cloud-chip:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.cloud-chip.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+.cloud-chip.cz-s { font-size:clamp(16px,1.6vw,24px); }
+.cloud-chip.cz-m { font-size:clamp(20px,2.2vw,34px); }
+.cloud-chip.cz-l { font-size:clamp(26px,3vw,46px); }
+/* Relier */
+.match-wrap { display:flex; gap:clamp(20px,5vw,70px); justify-content:center; flex-wrap:wrap; width:100%; }
+.match-col { display:flex; flex-direction:column; gap:12px; flex:1 1 260px; max-width:400px; }
+.match-item { border-radius:0; border:3px solid var(--cdg-bleu); background:#fff; color:var(--cdg-bleu); font-size:clamp(17px,1.8vw,26px); font-weight:600; padding:16px; text-align:center; transition:all var(--transition-base); position:relative; }
+.match-item:hover:not(:disabled){ background:var(--cdg-bleu-10); transform:translateY(-2px); }
+.match-item.selected { background:var(--cdg-orange); border-color:var(--cdg-orange-dark); color:var(--cdg-bleu-dark); }
+.match-item.paired { background:var(--cdg-bleu-10); border-color:var(--cdg-rose); }
+.match-item .pair-badge { position:absolute; top:4px; right:6px; background:var(--cdg-rose); color:#fff; border-radius:9999px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+.match-item.pair-ok { background:var(--vert-bg)!important; border-color:var(--vert)!important; color:var(--vert)!important; }
+.match-item.pair-ko { background:var(--rouge-bg)!important; border-color:var(--cdg-rose)!important; color:var(--cdg-rose-dark)!important; }
+
+.explain { border-left:6px solid var(--cdg-orange); background:var(--cdg-gray-50); padding:20px 26px; font-size:clamp(16px,1.6vw,24px); line-height:1.45; display:none; width:100%; max-width:1000px; margin:0 auto; text-align:left; }
+.explain.show { display:block; }
+@media (prefers-reduced-motion: no-preference){ .explain.show{ animation:fadeSlide 0.35s ease; } }
+.explain .verdict { font-weight:700; display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em; }
+.explain .verdict.ok { color:var(--vert); } .explain .verdict.ko { color:var(--cdg-rose-dark); }
+.explain .anec { display:block; margin-top:10px; font-style:italic; color:var(--cdg-gray-800); }
+.explain .anec b { font-style:normal; color:var(--cdg-bleu); }
+.explain a { color:var(--cdg-bleu); font-weight:700; text-decoration:underline; display:inline-block; margin-top:12px; }
+.explain a:hover { color:var(--cdg-rose); }
+
+.card-footer { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:18px clamp(20px,5vw,90px); background:#fff; border-top:1px solid var(--cdg-gray-200); flex-wrap:wrap; }
+
+/* ---------- Final ---------- */
+.final-score { font-size:clamp(56px,11vw,160px); font-weight:700; color:var(--cdg-white); line-height:1; }
+.final-score .unit { color:var(--cdg-orange); font-size:0.4em; }
+.final-label { font-size:clamp(20px,2.4vw,38px); font-weight:500; color:var(--cdg-orange); }
+.badge-win { display:inline-flex; align-items:center; gap:12px; background:var(--cdg-orange); color:var(--cdg-bleu-dark); font-size:clamp(22px,2.6vw,42px); font-weight:700; padding:16px 36px; border:4px solid var(--cdg-white); text-transform:uppercase; letter-spacing:0.03em; }
+.badge-encourage { font-size:clamp(20px,2.2vw,34px); font-weight:600; color:var(--cdg-white); background:var(--cdg-rose); padding:14px 32px; }
+.confetti-piece { position:fixed; top:-12vh; width:12px; height:18px; z-index:60; pointer-events:none; }
+.kbd-hint { position:fixed; bottom:10px; left:12px; font-size:13px; color:var(--cdg-gray-500); background:rgba(255,255,255,0.85); padding:4px 10px; z-index:50; border:1px solid var(--cdg-gray-200); }
+
+/* Bouton plein écran (présent sur tous les écrans, coin bas droite — zone libre) */
+.fs-toggle { position:fixed; bottom:10px; right:12px; z-index:90; background:rgba(39,42,95,0.9); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:0; font-family:var(--font-main); font-weight:600; font-size:13px; padding:7px 13px; display:flex; align-items:center; gap:6px; box-shadow:var(--shadow-md); }
+.fs-toggle:hover { background:var(--cdg-bleu-dark); border-color:var(--cdg-orange); }
+.fs-toggle .fs-ico { font-size:15px; line-height:1; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ACCUEIL -->
+  <section class="screen screen--blue active" id="screen-home">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">CDG 88 · Jeu de plateau</span>
+      <h1 class="title">Jeu OPEN 88 — À la découverte de l'IA</h1>
+      <p class="subtitle">Lancez le dé, avancez sur le plateau, choisissez votre pari de difficulté et atteignez 10 points en 10 questions ! (Les cases bonus ne comptent pas comme une question.)</p>
+      <div class="themes-legend" id="themes-legend"></div>
+      <div class="group-input-wrap">
+        <label for="teamName">Nom de l'équipe qui va jouer</label>
+        <input type="text" id="teamName" class="group-input" value="Équipe A" autocomplete="off">
+      </div>
+      <div class="avatar-wrap">
+        <label>Choisissez l'avatar de l'équipe</label>
+        <div class="avatar-grid" id="avatar-grid"></div>
+      </div>
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-start">Commencer ▶</button>
+        <button class="btn btn--ghost btn--big" id="btn-rules" style="color:#fff;border-color:rgba(255,255,255,0.4)">📖 Règles du jeu</button>
+      </div>
+      <div class="recap" id="home-recap" style="display:none">
+        <h3>Équipes déjà passées</h3>
+        <div id="home-recap-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RÈGLES DU JEU -->
+  <section class="screen screen--blue" id="screen-rules">
+    <div class="watermark">88</div>
+    <div class="rules-scroll">
+      <div class="rules-inner">
+        <div class="deco-bar"></div>
+        <span class="brand-tag">Règles du jeu</span>
+        <h1 class="title">Comment jouer au Jeu OPEN 88</h1>
+
+        <div class="rule-section">
+          <h3>🎯 Objectif</h3>
+          <p>Chaque équipe joue une manche de <b>10 questions</b>. Le but : accumuler le plus de points possible.</p>
+          <ul>
+            <li>Une équipe qui atteint <span class="rule-hl">10 points</span> remporte <b>1 point OPEN 88 (CDG88)</b> pour l'atelier.</li>
+            <li>À la fin de l'événement, l'équipe ayant obtenu le <b>plus gros score total</b> remporte en plus <span class="rule-hl-rose">le point bonus</span> !</li>
+          </ul>
+        </div>
+
+        <div class="rule-section">
+          <h3>🎲 Déroulé d'un tour</h3>
+          <ul>
+            <li>Les équipes passent <b>chacune leur tour</b> : une équipe joue toute sa manche, puis c'est à la suivante.</li>
+            <li>À chaque tour, l'équipe <b>lance le dé</b> et son pion avance sur le plateau.</li>
+            <li>La <b>couleur de la case</b> atteinte donne le <b>thème</b> de la question.</li>
+            <li>L'équipe choisit ensuite son <b>pari de difficulté</b> : <b>Facile = 1 point</b>, <b>Moyenne = 2 points</b>, <b>Difficile = 3 points</b>.</li>
+            <li>Bonne réponse → l'équipe <b>gagne les points</b> de la carte. Mauvaise réponse → <b>0 point</b> (aucune pénalité).</li>
+            <li>Après chaque réponse, l'animateur lit le <b>commentaire de sensibilisation</b> et une <b>anecdote</b> : c'est le cœur pédagogique du jeu.</li>
+          </ul>
+        </div>
+
+        <div class="rule-section">
+          <h3>🧩 Les types de questions</h3>
+          <div class="types-row">
+            <span class="type-chip">✔️ Vrai / Faux</span>
+            <span class="type-chip">🔤 Choix multiple (QCM)</span>
+            <span class="type-chip">☑️ Sélection multiple</span>
+            <span class="type-chip">💬 Nuage de mots</span>
+            <span class="type-chip">🔗 Relier</span>
+          </div>
+          <p style="margin-top:12px">Sélection multiple : cliquez <b>toutes</b> les bonnes réponses. Nuage de mots : cliquez les bons mots. Relier : associez chaque élément de gauche à celui de droite.</p>
+        </div>
+
+        <div class="rule-section">
+          <h3>🎨 Les 6 thèmes du plateau</h3>
+          <div class="themes-legend" id="rules-themes" style="justify-content:flex-start"></div>
+        </div>
+
+        <div class="rule-section">
+          <h3>⭐ Les cases spéciales</h3>
+          <ul class="case-list">
+            <li><span class="case-badge solid">🏁</span><span class="case-txt"><b>Départ</b> — si le pion s'y arrête, l'équipe <b>choisit librement son thème</b> pour la question.</span></li>
+            <li><span class="case-badge">➕</span><span class="case-txt"><b>Bonus +1</b> — l'équipe gagne <b>1 point offert</b>, sans avoir à répondre à une question.</span></li>
+            <li><span class="case-badge">✖️</span><span class="case-txt"><b>Double ou rien</b> — la prochaine carte vaut le <b>double</b> de points… mais une mauvaise réponse fait <b>perdre la valeur du pari</b> !</span></li>
+            <li><span class="case-badge">❓</span><span class="case-txt"><b>Question surprise</b> — le thème de la carte est <b>tiré au hasard</b> (l'équipe choisit seulement la difficulté).</span></li>
+            <li><span class="case-badge">💡</span><span class="case-txt"><b>Coup de pouce</b> — à la prochaine question à choix, une <b>mauvaise réponse est éliminée</b> pour aider l'équipe.</span></li>
+          </ul>
+          <p style="margin-top:14px">💡 <b>Important :</b> les cases spéciales <span class="rule-hl">ne comptent pas</span> parmi vos 10 questions — après leur effet, l'équipe <b>relance le dé</b>.</p>
+        </div>
+
+        <div class="btn-row" style="align-self:center;margin:1vh 0 2vh">
+          <button class="btn btn--orange btn--big" id="btn-rules-start">Commencer à jouer ▶</button>
+          <button class="btn btn--ghost btn--big" id="btn-rules-back" style="color:#fff;border-color:rgba(255,255,255,0.4)">◀ Retour à l'accueil</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATEAU -->
+  <section class="screen" id="screen-board">
+    <div class="g-header">
+      <div class="g-team"><span class="chip">Manche</span><span id="g-team"></span></div>
+      <div class="g-stats">
+        <div class="g-effects" id="g-effects"></div>
+        <div class="g-pill">Question <span class="n" id="g-roll">0</span> / 10</div>
+        <div class="g-pill score-box">Score : <span class="n" id="g-score">0</span> pts</div>
+        <div class="score-adj"><button id="btn-score-minus" title="Correction animateur : −1 point">−</button><button id="btn-score-plus" title="Correction animateur : +1 point">+</button></div>
+      </div>
+    </div>
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </section>
+
+  <!-- CARTE / QUESTION -->
+  <section class="screen" id="screen-card">
+    <div class="card-head" id="card-head">
+      <div class="ch-theme" id="ch-theme"></div>
+      <div class="ch-diff" id="ch-diff"></div>
+    </div>
+    <div class="card-body">
+      <span class="card-type" id="card-type"></span>
+      <div class="card-statement" id="card-statement"></div>
+      <div id="card-answers"></div>
+      <div class="explain" id="card-explain">
+        <span class="verdict" id="card-verdict"></span>
+        <span id="card-comment"></span>
+        <span class="anec" id="card-anec"></span>
+        <div id="card-link"></div>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn btn--ghost" id="btn-cancel" style="visibility:hidden">↻ Annuler / corriger</button>
+      <button class="btn btn--orange" id="btn-continue" disabled>Continuer ▶</button>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="screen screen--blue screen--dark" id="screen-final">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">Résultat de la manche</span>
+      <div class="final-label" id="final-team"></div>
+      <div class="final-score"><span id="final-pts">0</span> <span class="unit">points</span></div>
+      <div id="final-badge"></div>
+      <div class="best-line" id="final-best"></div>
+      <div class="recap" id="final-recap"><h3>Récapitulatif des équipes</h3><div id="final-recap-body"></div></div>
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange btn--big" id="btn-newteam">Nouvelle équipe ▶</button>
+        <button class="btn btn--secondary" id="btn-podium">🏁 Clôturer l'événement</button>
+        <button class="btn btn--ghost" id="btn-reset" style="color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3)">Tout réinitialiser</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PODIUM DE CLÔTURE -->
+  <section class="screen screen--blue screen--dark" id="screen-podium">
+    <div class="watermark">88</div>
+    <div class="blue-content">
+      <div class="deco-bar"></div>
+      <span class="brand-tag">Clôture de l'événement</span>
+      <h1 class="title" style="font-size:clamp(28px,4.4vw,64px)">Classement final OPEN 88</h1>
+      <div class="podium-list" id="podium-list"></div>
+      <div class="best-line" id="podium-bonus"></div>
+      <div class="btn-row" style="margin-top:1vh">
+        <button class="btn btn--orange" id="btn-podium-back">◀ Retour</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODAL (dé / difficulté / cases spéciales) -->
+<div class="modal" id="modal">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<div class="kbd-hint">Entrée / Espace : lancer le dé</div>
+<button class="fs-toggle" id="btn-fullscreen" title="Basculer en plein écran (touche F · Échap pour sortir)"><span class="fs-ico">⛶</span><span id="fs-label">Plein écran</span></button>
+
+<script>
+"use strict";
+
+/* ================= THÈMES ================= */
+const THEMES = {
+  H: { name: "Histoire de l'IA",            color: "#272A5F" },
+  S: { name: "Sécurité & données",          color: "#E94059" },
+  C: { name: "Cas d'usage",                 color: "#F7A720" },
+  P: { name: "Produits & entreprises",      color: "#1E9E5A" },
+  M: { name: "Comment ça marche",           color: "#6B4E9E" },
+  D: { name: "IA, droit & service public",  color: "#2AA9A0" }
+};
+const THEME_KEYS = ["H", "S", "C", "P", "M", "D"];
+const LEVEL_LABEL = { 1: "Facile", 2: "Moyenne", 3: "Difficile" };
+const LEVEL_PTS = { 1: 1, 2: 2, 3: 3 };
+const CNIL = "https://www.cnil.fr/fr/intelligence-artificielle";
+
+/* ================= BANQUE DE 36 CARTES ================= */
+const CARDS = [
+  /* ===================== NIVEAU 1 — FACILE : Vrai/Faux (12 cartes, 2 par thème) ===================== */
+  { theme:"H", level:1, type:"tf", correct:true, statement:"Alan Turing, qui a aidé à casser le code secret allemand « Enigma » pendant la guerre, est aussi considéré comme un des pères de l'IA.", comment:"Vrai. Alan Turing a contribué à casser Enigma, puis a posé les bases théoriques de l'informatique et de l'IA (le fameux « test de Turing »).", anec:"Son rôle pendant la guerre est resté secret pendant des décennies ; le film « The Imitation Game » lui rend hommage." },
+  { theme:"H", level:1, type:"tf", correct:false, statement:"L'intelligence artificielle est une invention toute récente, née avec ChatGPT dans les années 2020.", comment:"Faux. Le terme « intelligence artificielle » a été inventé en 1956. ChatGPT (2022) n'est que le moment où le grand public l'a découverte.", anec:"L'IA a près de 70 ans ; c'est son usage facile et grand public qui est récent." },
+  { theme:"S", level:1, type:"tf", correct:false, statement:"Je peux saisir le nom et l'adresse d'un administré dans un ChatGPT gratuit.", comment:"Faux. Le RGPD l'interdit : ces données personnelles ne doivent pas partir vers un outil grand public hébergé hors de l'Union européenne.", anec:"De nombreuses administrations bloquent désormais ChatGPT sur les postes de travail pour cette raison.", link:{ url:CNIL, label:"CNIL & IA" } },
+  { theme:"S", level:1, type:"tf", correct:true, statement:"Ce que j'écris dans une IA gratuite peut être réutilisé par l'entreprise qui la fabrique.", comment:"Vrai, c'est souvent le cas par défaut dans les versions gratuites. D'où l'importance de ne jamais y coller d'informations confidentielles.", anec:"En 2023, de grandes entreprises ont interdit ChatGPT à leurs salariés après des fuites d'informations internes." },
+  { theme:"C", level:1, type:"tf", correct:true, statement:"Une IA peut m'aider à rédiger le brouillon d'un compte-rendu de réunion.", comment:"Vrai, à condition de relire et de corriger. Rédiger, résumer, reformuler : ce sont les usages les plus utiles au quotidien.", anec:"Certaines solutions transcrivent même l'audio d'une réunion et en produisent un compte-rendu structuré en quelques secondes." },
+  { theme:"C", level:1, type:"tf", correct:false, statement:"Une IA peut décider toute seule d'accorder ou de refuser une aide à un administré.", comment:"Faux. L'IA peut aider à préparer un dossier, mais la décision reste humaine : c'est un principe fort du service public.", anec:"La loi encadre les décisions administratives automatisées : l'usager doit pouvoir obtenir une explication et un recours humain." },
+  { theme:"P", level:1, type:"tf", correct:true, statement:"Il existe une IA française, « Le Chat », développée par l'entreprise Mistral AI.", comment:"Vrai. Mistral AI, fondée à Paris en 2023, développe « Le Chat » ; ses modèles équipent aussi « L'Assistant » de l'État.", anec:"En moins de deux ans, Mistral est devenue l'une des startups les plus valorisées d'Europe.", link:{ url:"https://mistral.ai", label:"Mistral AI" } },
+  { theme:"P", level:1, type:"tf", correct:false, statement:"ChatGPT est le seul outil d'intelligence artificielle qui existe.", comment:"Faux. Il existe de nombreux assistants : Gemini (Google), Claude (Anthropic), Le Chat (Mistral)… et bien d'autres usages de l'IA.", anec:"L'IA est aussi dans le GPS, les filtres anti-spam ou les recommandations de films : bien au-delà de ChatGPT." },
+  { theme:"M", level:1, type:"tf", correct:false, statement:"Une IA comprend vraiment le sens de ce qu'elle écrit, exactement comme un humain.", comment:"Faux. Elle calcule le mot le plus probable après le précédent, sans conscience du sens : c'est de la prédiction statistique.", anec:"Le site officiel de l'État le rappelle : ses réponses sont des « propositions probabilistes » qui peuvent contenir des erreurs." },
+  { theme:"M", level:1, type:"tf", correct:true, statement:"La façon de formuler ma demande change beaucoup la qualité de la réponse.", comment:"Vrai. Une consigne claire, avec du contexte et un rôle précis (le « prompt »), donne une réponse bien meilleure.", anec:"C'est un vrai savoir-faire, le « prompting » — au point que des formations entières y sont consacrées." },
+  { theme:"D", level:1, type:"tf", correct:true, statement:"L'État français a développé son propre outil d'IA pour ses agents (« L'Assistant »).", comment:"Vrai. « L'Assistant » a été conçu par la DINUM avec la française Mistral AI, dans un environnement sécurisé.", anec:"Après une phase de test, son accès a été étendu à près d'un million d'agents de l'État." },
+  { theme:"D", level:1, type:"tf", correct:true, statement:"Si une IA rédige une erreur dans mon courrier, c'est moi, l'agent, qui reste responsable.", comment:"Vrai. La responsabilité est toujours humaine : l'agent relit, valide et engage sa fonction. L'IA propose, l'humain décide.", anec:"Une IA ne porte aucune responsabilité juridique : c'est l'agent et sa collectivité qui répondent en cas d'erreur." },
+
+  /* ===================== NIVEAU 2 — MOYEN (12 cartes) ===================== */
+  { theme:"H", level:2, type:"qcm", options:["Le premier robot humanoïde","Un test pour savoir si une machine peut se faire passer pour un humain","Internet","Le téléphone portable"], correctIndex:1, statement:"Alan Turing s'est fait connaître en cassant « Enigma ». Quelle idée a-t-il ensuite posée, qui a lancé l'IA ?", comment:"Le « test de Turing » (1950) : si, en discutant, on ne distingue plus la machine d'un humain, elle réussit le test.", anec:"Turing appelait cela le « jeu de l'imitation » — un titre repris par le film « The Imitation Game »." },
+  { theme:"H", level:2, type:"match", pairs:{ "ChatGPT":"Écrire et répondre", "GPS (Waze)":"Trouver le chemin le plus rapide", "Siri / Google Assistant":"Obéir à la voix", "Filtre anti-spam":"Trier les mails indésirables" }, statement:"Reliez chaque outil à ce qu'il fait.", comment:"Tous ces outils du quotidien utilisent de l'IA : écrire, guider, obéir à la voix, trier les mails.", anec:"L'IA n'est pas que ChatGPT : elle est déjà partout autour de nous, souvent sans qu'on le remarque." },
+  { theme:"S", level:2, type:"qcm", options:["Ne rien changer","En retirer les données personnelles","Mettre le nom complet des personnes","Y ajouter son mot de passe"], correctIndex:1, statement:"Avant de soumettre un document à une IA grand public, quel est le bon réflexe ?", comment:"Retirer toute donnée personnelle. Une IA grand public n'est pas un espace confidentiel.", anec:"La règle d'or : « si tu ne l'écrirais pas sur une carte postale, ne l'écris pas dans une IA grand public »." },
+  { theme:"S", level:2, type:"qcm", options:["Le dark web","Le cloud IA","Le shadow IA","La blockchain"], correctIndex:2, statement:"Utiliser des outils d'IA non autorisés, en dehors de tout cadre, s'appelle…", comment:"Le « shadow IA » (IA de l'ombre) : un vrai risque, car des données sensibles peuvent fuiter via des outils non validés.", anec:"Une enquête interne de 2025 auprès de 2 000 agents de Bercy a confirmé que cet usage clandestin s'était généralisé." },
+  { theme:"C", level:2, type:"qcm", options:["Remplacer les agents d'accueil","Répondre automatiquement aux questions courantes des habitants","Surveiller les habitants","Rédiger les décisions du maire"], correctIndex:1, statement:"Des mairies comme Issy-les-Moulineaux ont mis un chatbot sur leur site. À quoi sert-il principalement ?", comment:"À répondre en continu aux questions courantes (démarches, horaires), en s'appuyant sur les contenus de la ville — sans remplacer les agents.", anec:"En moins d'un an, « IssyGPT » a traité environ 15 000 conversations, soulageant l'accueil physique et téléphonique." },
+  { theme:"C", level:2, type:"qcm", options:["Résumer une note publique","Traduire un texte officiel","Reformuler un mail","Saisir le dossier social nominatif d'un usager"], correctIndex:3, statement:"Parmi ces usages, lequel est DÉCONSEILLÉ avec une IA grand public ?", comment:"Saisir un dossier nominatif. Les trois autres usages sont sans risque ; dès qu'il y a des données personnelles, il faut un outil sécurisé.", anec:"La bonne pratique : outil grand public pour le contenu banal, outil souverain pour tout ce qui touche aux administrés." },
+  { theme:"P", level:2, type:"qcm", options:["N'importe quel outil gratuit","Le plus utilisé au monde","Un outil français ou européen, dont les données restent en France (ex. Mistral)","Un outil sans création de compte"], correctIndex:2, statement:"Pour protéger les données des administrés, quel type d'outil privilégier ?", comment:"Un outil souverain (français ou européen), hébergé en France et soumis au droit européen : les données ne partent pas hors de l'UE.", anec:"C'est le sens de « L'Assistant » de l'État, qui s'appuie sur la française Mistral AI.", link:{ url:"https://ia.numerique.gouv.fr", label:"ia.numerique.gouv.fr" } },
+  { theme:"P", level:2, type:"qcm", options:["Un bug","Une hallucination","Un virus","Une mise à jour"], correctIndex:1, statement:"Une information fausse mais crédible inventée par une IA s'appelle…", comment:"Une « hallucination ». L'IA ne ment pas volontairement : elle génère la suite la plus probable, même sans avoir la bonne information.", anec:"En 2023, un avocat de New York a présenté au tribunal six décisions de justice inventées par ChatGPT ; il a écopé d'une amende." },
+  { theme:"M", level:2, type:"qcm", options:["Un cookie","Un prompt","Un pixel","Un serveur"], correctIndex:1, statement:"Comment appelle-t-on l'instruction ou la consigne que l'on donne à une IA ?", comment:"Un « prompt ». C'est le point de départ de toute interaction : plus il est précis, meilleure est la réponse.", anec:"Donner un rôle à l'IA (« agis comme un juriste territorial ») améliore souvent nettement sa réponse." },
+  { theme:"M", level:2, type:"select", options:["Anonymiser les données avant de les soumettre","Coller le dossier complet d'un administré","Relire et vérifier la réponse produite","Réserver un outil validé aux données sensibles","Y enregistrer ses mots de passe"], correct:[0,2,3], statement:"Sélectionnez TOUTES les bonnes pratiques avec une IA grand public.", comment:"Anonymiser, relire et vérifier, et réserver les données sensibles à un outil validé. Jamais de dossier nominatif ni de mot de passe.", anec:"Une IA grand public n'est pas un coffre-fort : on n'y met que ce qui pourrait être public.", link:{ url:CNIL, label:"CNIL & IA" } },
+  { theme:"D", level:2, type:"qcm", options:["Le RGPD","L'AI Act","Le Cloud Act","Le DSA"], correctIndex:1, statement:"Quel règlement européen encadre l'IA selon son niveau de risque ?", comment:"L'AI Act. Il classe les IA par niveau de risque et interdit certains usages. Il complète le RGPD, qui protège les données.", anec:"Il interdit par exemple la « notation sociale » des citoyens, avec des amendes pouvant atteindre 7 % du chiffre d'affaires mondial.", link:{ url:CNIL, label:"CNIL & IA" } },
+  { theme:"D", level:2, type:"qcm", options:["L'envoyer directement","Le relire et le vérifier : il reste responsable du contenu","Faire confiance à l'IA","Transférer la responsabilité à l'IA"], correctIndex:1, statement:"Un agent utilise une IA pour rédiger un courrier. Avant de l'envoyer, que doit-il faire ?", comment:"Le relire et le vérifier : la responsabilité reste 100 % humaine. L'agent corrige, valide et engage sa structure.", anec:"Une IA ne porte aucune responsabilité juridique : en cas d'erreur transmise à un usager, c'est l'agent qui répond." },
+
+  /* ===================== NIVEAU 3 — DIFFICILE (13 cartes) ===================== */
+  { theme:"H", level:3, type:"qcm", options:["Les échecs","Le Go","Le Monopoly","Les dames"], correctIndex:1, statement:"En 2016, une IA a battu un champion du monde à quel jeu de plateau réputé très difficile ?", comment:"Le Go. Le programme AlphaGo (Google DeepMind) a battu le champion Lee Sedol 4 parties à 1.", anec:"AlphaGo a joué un « coup 37 » si inattendu que les experts l'ont d'abord cru raté, avant de comprendre son génie." },
+  { theme:"H", level:3, type:"qcm", options:["Une course de Formule 1","Un grand jeu télévisé de culture et de questions-réponses","Une élection","Un concours de cuisine"], correctIndex:1, statement:"En 2011, un ordinateur d'IBM (« Watson ») a battu les meilleurs champions humains… à quoi ?", comment:"À un grand jeu télévisé de questions-réponses (le « Jeopardy! » américain). Watson comprenait les questions en langage naturel.", anec:"Watson a ensuite été réorienté vers la santé, pour aider à analyser des dossiers médicaux." },
+  { theme:"S", level:3, type:"qcm", options:["À cause du décalage horaire","Parce que c'est trop cher","Une loi américaine (le Cloud Act) peut permettre d'y accéder","Parce que c'est en anglais"], correctIndex:2, statement:"Pourquoi un outil d'IA hébergé aux États-Unis pose-t-il problème pour des données publiques françaises ?", comment:"Le Cloud Act, une loi américaine, peut contraindre une entreprise US à donner accès aux données qu'elle héberge, même stockées ailleurs.", anec:"C'est pour échapper à ce risque que l'État impose l'hébergement de ses données sensibles en France." },
+  { theme:"S", level:3, type:"qcm", options:["Enlever seulement le nom","Enlever tout ce qui permet d'identifier la personne, même indirectement","Changer la police d'écriture","Le mettre en majuscules"], correctIndex:1, statement:"Pour anonymiser vraiment un dossier, il faut…", comment:"Enlever tout élément identifiant, même indirect : une adresse, une date de naissance ou une situation unique peuvent suffire à reconnaître la personne.", anec:"Avec seulement le code postal, la date de naissance et le sexe, on peut ré-identifier une large majorité des gens." },
+  { theme:"C", level:3, type:"qcm", options:["Remplacer le médecin","Repérer des anomalies sur des radios ou des images médicales","Décider seule du traitement","Fixer le prix des consultations"], correctIndex:1, statement:"L'IA sert aussi dans la santé. Dans quel domaine aide-t-elle déjà les médecins ?", comment:"À repérer des anomalies sur l'imagerie médicale (radios, IRM), en appui du médecin — qui garde la décision.", anec:"Ces IA ne remplacent pas le médecin : elles signalent des zones suspectes, parfois plus vite et plus finement que l'œil humain." },
+  { theme:"C", level:3, type:"qcm", options:["Le nombre de repas à préparer dans les cantines","Le nombre de naissances","La météo","Le trafic routier"], correctIndex:0, statement:"Nantes Métropole utilise une IA pour prédire un besoin quotidien avec 98 % de précision. Lequel ?", comment:"Le nombre de repas. Mieux anticiper évite le gaspillage alimentaire et fait des économies.", anec:"Ce système sauve des milliers de repas chaque année — un bel exemple d'IA utile, sobre et concrète." },
+  { theme:"P", level:3, type:"qcm", options:["ChatGPT","Gemini","Le Chat","Claude"], correctIndex:2, statement:"Parmi ces assistants d'IA, lequel n'est PAS américain ?", comment:"Le Chat, développé par la française Mistral AI. Les trois autres sont américains (OpenAI, Google, Anthropic).", anec:"Avoir un champion national garantit un outil soumis au droit européen, sans dépendance à une puissance étrangère." },
+  { theme:"P", level:3, type:"qcm", options:["Ils sont totalement gratuits, sans aucun modèle","Avec des abonnements payants et les données/usages des utilisateurs","Ils sont financés par l'État","Ils sont vendus une seule fois, comme un livre"], correctIndex:1, statement:"Beaucoup d'outils d'IA sont gratuits. Comment gagnent-ils de l'argent le plus souvent ?", comment:"Modèle « freemium » : une version gratuite attire les utilisateurs, puis des abonnements payants et l'exploitation des données/usages génèrent les revenus.", anec:"« Gratuit » ne veut pas dire « sans contrepartie » : souvent, la contrepartie, ce sont vos données." },
+  { theme:"M", level:3, type:"qcm", options:["Prédisant le mot suivant le plus probable, un par un","Copiant une phrase toute faite sur internet","Traduisant depuis l'anglais","Consultant une base de données de réponses"], correctIndex:0, statement:"Pour écrire une phrase, une IA générative comme ChatGPT procède en…", comment:"Elle prédit le mot suivant le plus probable, encore et encore, à partir de milliards de textes lus. Elle ne recopie pas : elle recompose.", anec:"C'est ce qui explique sa fluidité… et ses hallucinations : elle privilégie ce qui « sonne juste »." },
+  { theme:"M", level:3, type:"qcm", options:["Crée du contenu nouveau (texte, image ou son)","Se contente de trier des fichiers","Remplace l'antivirus","Accélère l'ordinateur"], correctIndex:0, statement:"Une IA dite « générative », comme ChatGPT, se distingue parce qu'elle…", comment:"Elle génère du contenu nouveau (d'où « générative ») : un texte, une image, un son, à la demande.", anec:"Le « GPT » de ChatGPT signifie « Generative Pre-trained Transformer » : générative, pré-entraînée, fondée sur l'architecture « transformer »." },
+  { theme:"D", level:3, type:"qcm", options:["Interdire toute IA","Former et sensibiliser les agents qui utilisent l'IA","Rendre l'IA obligatoire","Supprimer les emplois concernés"], correctIndex:1, statement:"Depuis 2025, l'AI Act impose quelque chose aux organisations qui utilisent l'IA. Quoi ?", comment:"Depuis février 2025, l'AI Act impose une obligation de « littératie IA » : former et sensibiliser les personnes qui utilisent l'IA.", anec:"C'est exactement l'objectif de cet atelier OPEN 88 : monter en compétence collectivement sur l'IA.", link:{ url:CNIL, label:"CNIL & IA" } },
+  { theme:"D", level:3, type:"cloud", options:["SecNumCloud","Hébergement en France","L'Assistant","ChatGPT gratuit pour données sensibles","Cloud Act"], correct:[0,1,2], statement:"Cliquez les mots associés à un usage SÛR et souverain de l'IA.", comment:"Souveraineté = hébergement en France, label SecNumCloud, outils validés comme « L'Assistant ». À éviter : outils grand public pour données sensibles, exposés au Cloud Act.", anec:"Le bon réflexe : pour les données des administrés, on choisit un outil hébergé en France et qualifié par l'État.", link:{ url:"https://ia.numerique.gouv.fr", label:"ia.numerique.gouv.fr" } },
+  { theme:"P", level:3, type:"match", pairs:{ "OpenAI":"ChatGPT", "Google":"Gemini", "Mistral":"Le Chat", "Anthropic":"Claude" }, statement:"Reliez chaque entreprise à son intelligence artificielle.", comment:"OpenAI (ChatGPT), Google (Gemini), la française Mistral (Le Chat) et Anthropic (Claude).", anec:"Le marché de l'IA générative est mondial : chaque grand acteur a son assistant, avec un seul champion européen, Mistral.", link:{ url:"https://mistral.ai", label:"Mistral AI" } }
+];
+
+/* ================= PLATEAU (circuit de 20 cases) ================= */
+const BOARD = [
+  { kind:"start" },
+  { kind:"theme", theme:"H" },
+  { kind:"theme", theme:"S" },
+  { kind:"bonus" },
+  { kind:"theme", theme:"C" },
+  { kind:"theme", theme:"P" },
+  { kind:"surprise" },
+  { kind:"theme", theme:"M" },
+  { kind:"theme", theme:"D" },
+  { kind:"double" },
+  { kind:"theme", theme:"H" },
+  { kind:"theme", theme:"S" },
+  { kind:"pouce" },
+  { kind:"theme", theme:"C" },
+  { kind:"theme", theme:"P" },
+  { kind:"bonus" },
+  { kind:"theme", theme:"M" },
+  { kind:"theme", theme:"D" },
+  { kind:"surprise" },
+  { kind:"double" }
+];
+const MAX_Q = 10;   // 10 questions par manche (les cases spéciales ne comptent PAS)
+const GOAL = 10;
+const AVATARS = ["🤖","🦊","🦉","🐺","🦁","🐙","🚀","⚡","🧠","🦄","🐝","🎯"];
+const TYPE_LABELS = { tf:"Vrai ou Faux", qcm:"Choix multiple", select:"Sélection multiple", cloud:"Nuage de mots", match:"Relier" };
+
+/* ================= ÉTAT ================= */
+const state = {
+  teamName: "Équipe A",
+  avatar: "🤖",
+  nextLetter: 0,
+  pos: 0,
+  rolls: 0,       // nombre total de lancés (affiché à titre indicatif)
+  questions: 0,   // nombre de questions RÉELLEMENT posées (limite = 10)
+  score: 0,
+  used: new Set(),
+  eventUsed: new Set(),   // cartes vues depuis le début de l'événement (toutes équipes)
+  doubleNext: false,
+  hintNext: false,
+  // carte en cours
+  curCard: null, curTheme: null, curLevel: null, curWager: 0, curDouble: false, answered: false, preScore: 0,
+  history: []
+};
+
+/* ================= HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+const screens = { home:$("screen-home"), rules:$("screen-rules"), board:$("screen-board"), card:$("screen-card"), final:$("screen-final"), podium:$("screen-podium") };
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const DICE = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+
+function showScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove("active"));
+  screens[name].classList.add("active");
+  document.querySelector(".kbd-hint").style.display = (name === "board") ? "block" : "none";
+  window.scrollTo(0, 0);
+}
+function escapeHtml(str){ return String(str).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function nextLetterName(idx){ let s=""; idx+=1; while(idx>0){ idx--; s=String.fromCharCode(65+(idx%26))+s; idx=Math.floor(idx/26); } return "Équipe "+s; }
+function randInt(n){ return Math.floor(Math.random()*n); }
+function cssEscape(s){ return String(s).replace(/["\\]/g,"\\$&"); }
+
+/* ================= ACCUEIL ================= */
+function renderLegend(){
+  const html = THEME_KEYS.map(k =>
+    `<span class="legend-chip"><span class="legend-dot" style="background:${THEMES[k].color}"></span>${escapeHtml(THEMES[k].name)}</span>`
+  ).join("");
+  $("themes-legend").innerHTML = html;
+  const rt = $("rules-themes"); if (rt) rt.innerHTML = html;
+}
+function renderAvatars(){
+  const taken = new Set(state.history.map(h=>h.avatar));
+  $("avatar-grid").innerHTML = AVATARS.map(a =>
+    `<button class="avatar-btn${a===state.avatar?" selected":""}${taken.has(a)&&a!==state.avatar?" taken":""}" data-a="${a}" title="${taken.has(a)?"Déjà pris (autorisé)":""}">${a}</button>`
+  ).join("");
+  $("avatar-grid").querySelectorAll(".avatar-btn").forEach(b =>
+    b.addEventListener("click", () => { state.avatar = b.dataset.a; renderAvatars(); })
+  );
+}
+
+function renderHome(){
+  $("teamName").value = state.teamName;
+  renderAvatars();
+  const r = $("home-recap");
+  if (state.history.length){ r.style.display="block"; $("home-recap-body").innerHTML = recapTableHTML(-1); }
+  else r.style.display="none";
+  showScreen("home");
+}
+function recapTableHTML(hi){
+  const best = bestScore();
+  const rows = state.history.map((h,i)=>{
+    const win = h.score >= GOAL;
+    const crown = best > 0 && h.score === best;
+    return `<tr class="${i===hi?"just-played":""}"><td>${i+1}</td><td>${h.avatar||""} ${escapeHtml(h.name)}${crown?" 👑":""}</td><td class="score${win?" win":""}">${h.score} pts${win?" 🏆":""}</td></tr>`;
+  }).join("");
+  return `<table><thead><tr><th>#</th><th>Équipe</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function bestScore(){
+  return state.history.reduce((m,h)=>Math.max(m,h.score), 0);
+}
+function bestTeams(){
+  const b = bestScore();
+  return b > 0 ? state.history.filter(h=>h.score===b).map(h=>h.name) : [];
+}
+
+/* ================= DÉMARRAGE ================= */
+function startRound(){
+  state.teamName = $("teamName").value.trim() || state.teamName;
+  state.pos=0; state.rolls=0; state.questions=0; state.score=0;
+  state.used = new Set(state.eventUsed);   // évite de resservir aux équipes suivantes les cartes déjà vues
+  state.doubleNext=false; state.hintNext=false; state.curCard=null; state.answered=false;
+  buildBoard();
+  updateHeader();
+  renderCenter("roll");
+  showScreen("board");
+}
+
+/* ================= PLATEAU ================= */
+function cellPos(i){
+  if (i<=6) return { r:1, c:i+1 };
+  if (i<=10) return { r:i-7+2, c:7 };
+  if (i<=16) return { r:5, c:7-(i-10) };
+  return { r:5-(i-16), c:1 };
+}
+function cellContent(cell){
+  if (cell.kind==="start") return { cls:"start", ico:"🏁", label:"DÉPART", bg:null };
+  if (cell.kind==="bonus") return { cls:"special", ico:"➕", label:"Bonus +1", bg:null };
+  if (cell.kind==="double") return { cls:"special", ico:"✖️", label:"Double ou rien", bg:null };
+  if (cell.kind==="surprise") return { cls:"special", ico:"❓", label:"Surprise", bg:null };
+  if (cell.kind==="pouce") return { cls:"special", ico:"💡", label:"Coup de pouce", bg:null };
+  const t = THEMES[cell.theme];
+  return { cls:"theme", ico:"", label:t.name, bg:t.color };
+}
+function buildBoard(){
+  const board = $("board");
+  board.innerHTML = "";
+  BOARD.forEach((cell,i)=>{
+    const { r,c } = cellPos(i);
+    const info = cellContent(cell);
+    const el = document.createElement("div");
+    el.className = "cell " + info.cls;
+    el.dataset.i = i;
+    el.style.gridRow = r; el.style.gridColumn = c;
+    if (info.bg) el.style.background = info.bg;
+    if (cell.theme === "C") el.style.color = "var(--cdg-bleu-dark)"; // lisibilité sur fond orange
+    el.innerHTML = (info.ico?`<span class="cell-ico">${info.ico}</span>`:"") + `<span>${escapeHtml(info.label)}</span>`;
+    board.appendChild(el);
+  });
+  // panneau central
+  const center = document.createElement("div");
+  center.className = "center-panel"; center.id = "center-panel";
+  board.appendChild(center);
+  highlightPawn(false);
+}
+function highlightPawn(hop){
+  document.querySelectorAll(".cell.current").forEach(el=>el.classList.remove("current"));
+  document.querySelectorAll(".pawn").forEach(el=>el.remove());
+  const cell = document.querySelector(`.cell[data-i="${state.pos}"]`);
+  if (!cell) return;
+  cell.classList.add("current");
+  const pawn = document.createElement("div");
+  pawn.className = "pawn" + (hop && !reduceMotion ? " hop" : "");
+  pawn.textContent = state.avatar;
+  cell.appendChild(pawn);
+}
+function updateHeader(){
+  $("g-team").textContent = state.avatar + " " + state.teamName;
+  $("g-roll").textContent = state.questions;
+  $("g-score").textContent = state.score;
+  const fx = [];
+  if (state.doubleNext) fx.push('<span class="fx-badge fx-double">✖️ Double ou rien actif</span>');
+  if (state.hintNext) fx.push('<span class="fx-badge fx-hint">💡 Indice en attente</span>');
+  $("g-effects").innerHTML = fx.join("");
+}
+function bumpScore(){
+  $("g-score").textContent = state.score;
+  if (reduceMotion) return;
+  const b = $("g-score").closest(".g-pill"); b.classList.add("score-box");
+  const box = $("g-score").closest(".g-pill");
+  box.classList.remove("bump"); void box.offsetWidth; box.classList.add("bump");
+}
+
+/* ---------- Panneau central : lancer le dé ---------- */
+function renderCenter(mode){
+  const c = $("center-panel");
+  if (!c) return;
+  if (mode==="roll"){
+    const last = state.questions >= MAX_Q;
+    c.innerHTML = `
+      <div class="dice" id="dice">🎲</div>
+      <div class="center-status" id="center-status">${last ? "10 questions jouées !" : "À vous de jouer, "+escapeHtml(state.teamName)+" !"}</div>
+      <button class="btn btn--orange btn--big" id="btn-roll">${last ? "Voir le résultat ▶" : "Lancer le dé 🎲"}</button>`;
+    $("btn-roll").addEventListener("click", last ? finishRound : rollDice);
+  }
+}
+
+/* ---------- Lancer le dé ---------- */
+function rollDice(){
+  if (state.questions >= MAX_Q){ finishRound(); return; }
+  const btn = $("btn-roll"); if (btn) btn.disabled = true;
+  const result = 1 + randInt(6);
+  const dice = $("dice");
+  const status = $("center-status");
+  status.textContent = "Le dé roule…";
+  const finalize = () => {
+    dice.textContent = DICE[result];
+    status.innerHTML = `Vous avancez de <b>${result}</b> case${result>1?"s":""} !`;
+    state.rolls++;
+    stepPawn(result, () => resolveLanding());
+  };
+  if (reduceMotion){ finalize(); return; }
+  dice.classList.add("spin");
+  let ticks = 0;
+  const iv = setInterval(() => {
+    dice.textContent = DICE[1 + randInt(6)];
+    ticks++;
+    if (ticks >= 8){ clearInterval(iv); dice.classList.remove("spin"); finalize(); }
+  }, 70);
+}
+
+/* ---------- Déplacement du pion case par case ---------- */
+function stepPawn(steps, cb){
+  if (reduceMotion){ state.pos = (state.pos + steps) % BOARD.length; highlightPawn(false); cb(); return; }
+  let done = 0;
+  const iv = setInterval(() => {
+    state.pos = (state.pos + 1) % BOARD.length;
+    highlightPawn(true);
+    done++;
+    if (done >= steps){ clearInterval(iv); setTimeout(cb, 260); }
+  }, 260);
+}
+
+/* ---------- Résolution de la case atteinte ---------- */
+function resolveLanding(){
+  const cell = BOARD[state.pos];
+  if (cell.kind === "theme")      openDifficulty(cell.theme, false);
+  else if (cell.kind === "surprise"){ const t = THEME_KEYS[randInt(THEME_KEYS.length)]; openDifficulty(t, true); }
+  else if (cell.kind === "bonus")     openSpecial("bonus");
+  else if (cell.kind === "double")    openSpecial("double");
+  else if (cell.kind === "pouce")     openSpecial("pouce");
+  else openSpecial("start");
+}
+
+/* ================= MODALS ================= */
+function showModal(html){ $("modal-box").innerHTML = html; $("modal").classList.add("show"); }
+function hideModal(){ $("modal").classList.remove("show"); }
+
+function afterTurn(){
+  // Cases spéciales (bonus, double, coup de pouce, départ) : PAS de question consommée.
+  // On revient au plateau pour relancer le dé (question suivante).
+  hideModal();
+  updateHeader();
+  renderCenter("roll");
+}
+
+/* ---------- Cases spéciales ---------- */
+function openSpecial(kind){
+  let html = "";
+  if (kind==="bonus"){
+    state.score += 1; bumpScore(); updateHeader();
+    html = `<div class="modal-theme-tag" style="background:var(--cdg-orange);color:var(--cdg-bleu-dark)">Case Bonus</div>
+      <h2>➕ 1 point offert !</h2>
+      <p class="modal-sub">L'équipe gagne <b>1 point</b> sans question. Score : <b>${state.score} pts</b>.</p>
+      <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
+  } else if (kind==="double"){
+    state.doubleNext = true;
+    html = `<div class="modal-theme-tag" style="background:var(--cdg-rose)">Double ou rien</div>
+      <h2>✖️ Double ou rien activé</h2>
+      <p class="modal-sub">Votre <b>prochaine carte</b> vaudra le <b>double</b> de points… mais attention : une mauvaise réponse vous fera <b>perdre la valeur du pari</b> !</p>
+      <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
+  } else if (kind==="pouce"){
+    state.hintNext = true;
+    html = `<div class="modal-theme-tag" style="background:var(--cdg-bleu)">Coup de pouce</div>
+      <h2>💡 Coup de pouce activé</h2>
+      <p class="modal-sub">Pour votre <b>prochaine question à choix multiple</b>, une mauvaise réponse sera éliminée.</p>
+      <button class="btn btn--orange btn--big" id="m-continue">Continuer ▶</button>`;
+  } else {
+    // Case Départ : l'équipe choisit librement son thème (plus de tour mort)
+    const themeBtns = THEME_KEYS.map(k =>
+      `<button class="diff-btn" style="border-color:${THEMES[k].color};color:${k==="C"?"var(--cdg-orange-dark)":THEMES[k].color}" data-t="${k}">${escapeHtml(THEMES[k].name)}</button>`
+    ).join("");
+    html = `<div class="modal-theme-tag" style="background:var(--cdg-bleu)">Case Départ</div>
+      <h2>🏁 Case Départ — à vous de choisir !</h2>
+      <p class="modal-sub">Arrêt sur la case Départ : l'équipe <b>choisit librement son thème</b>.</p>
+      <div class="diff-grid" style="grid-template-columns:repeat(3,1fr)">${themeBtns}</div>`;
+    showModal(html);
+    $("modal-box").querySelectorAll("[data-t]").forEach(b =>
+      b.addEventListener("click", () => { hideModal(); openDifficulty(b.dataset.t, false); })
+    );
+    return;
+  }
+  showModal(html);
+  $("m-continue").addEventListener("click", afterTurn);
+}
+
+/* ---------- Choix de la difficulté ---------- */
+function openDifficulty(theme, surprise){
+  const t = THEMES[theme];
+  const html = `
+    <div class="modal-theme-tag" style="background:${t.color}${theme==="C"?";color:var(--cdg-bleu-dark)":""}">${surprise?"Question surprise · ":""}${escapeHtml(t.name)}</div>
+    <h2>Choisissez votre pari</h2>
+    <p class="modal-sub">${surprise?"Le thème a été tiré au sort. ":""}Plus c'est difficile, plus ça rapporte !${state.doubleNext?" <b>(Double ou rien actif : points ×2 !)</b>":""}</p>
+    <div class="diff-grid">
+      <button class="diff-btn d1" data-l="1">Facile<span class="pts">1 point</span></button>
+      <button class="diff-btn d2" data-l="2">Moyenne<span class="pts">2 points</span></button>
+      <button class="diff-btn d3" data-l="3">Difficile<span class="pts">3 points</span></button>
+    </div>`;
+  showModal(html);
+  $("modal-box").querySelectorAll(".diff-btn").forEach(b =>
+    b.addEventListener("click", () => { hideModal(); startCard(theme, parseInt(b.dataset.l,10)); })
+  );
+}
+
+/* ================= TIRAGE DE CARTE ================= */
+function drawCard(theme, level){
+  let pool = CARDS.filter((c,i)=>c.theme===theme && c.level===level && !state.used.has(i));
+  if (!pool.length) pool = CARDS.filter((c,i)=>c.theme===theme && !state.used.has(i));
+  if (!pool.length) pool = CARDS.filter((c,i)=>!state.used.has(i));
+  if (!pool.length){ state.used = new Set(); pool = CARDS.filter(c=>c.theme===theme); }
+  const card = pool[randInt(pool.length)];
+  state.used.add(CARDS.indexOf(card));
+  state.eventUsed.add(CARDS.indexOf(card));
+  return card;
+}
+
+/* ================= CARTE / QUESTION ================= */
+function startCard(theme, level){
+  const card = drawCard(theme, level);
+  state.curCard = card; state.curTheme = theme; state.curLevel = level;
+  state.curDouble = state.doubleNext; state.doubleNext = false;
+  state.curWager = LEVEL_PTS[level] * (state.curDouble ? 2 : 1);
+  state.answered = false; state.preScore = state.score;
+  state.questions++;          // une vraie question = elle compte dans les 10
+  updateHeader();
+  renderCard();
+  showScreen("card");
+}
+
+function renderCard(){
+  const card = state.curCard, t = THEMES[state.curTheme];
+  $("card-head").style.background = t.color;
+  $("card-head").style.color = (state.curTheme === "C") ? "var(--cdg-bleu-dark)" : "#fff";
+  $("ch-theme").textContent = t.name;
+  $("ch-diff").textContent = LEVEL_LABEL[state.curLevel] + " · " + state.curWager + " pt" + (state.curWager>1?"s":"")
+    + (state.curDouble?" (×2)":"")
+    + (card.level !== state.curLevel ? " · carte de repli (niv. " + card.level + ")" : "");
+  $("card-type").textContent = TYPE_LABELS[card.type] || "Question";
+  $("card-statement").textContent = card.statement;
+  $("card-explain").classList.remove("show");
+  $("btn-continue").disabled = true;
+  $("btn-cancel").style.visibility = "hidden";
+
+  const zone = $("card-answers"); zone.innerHTML = "";
+  if (card.type === "tf") renderTF(card, zone);
+  else if (card.type === "qcm") renderQCM(card, zone);
+  else if (card.type === "select" || card.type === "cloud") renderSelect(card, zone, card.type === "cloud");
+  else if (card.type === "match") renderMatch(card, zone);
+}
+
+function renderTF(card, zone){
+  zone.innerHTML = `<div class="tf-buttons">
+      <button class="tf-btn" data-val="true">VRAI</button>
+      <button class="tf-btn" data-val="false">FAUX</button></div>`;
+  const btns = zone.querySelectorAll(".tf-btn");
+  btns.forEach(b => b.addEventListener("click", () => {
+    if (state.answered) return;
+    const chosen = b.dataset.val === "true";
+    const ok = chosen === card.correct;
+    btns.forEach(x => {
+      x.disabled = true;
+      const v = x.dataset.val === "true";
+      if (v === card.correct){ x.classList.add("answer-correct"); if(!reduceMotion) x.classList.add("glow"); x.insertAdjacentHTML("beforeend"," ✓"); }
+      if (v === chosen && !ok){ x.classList.add("answer-wrong"); if(!reduceMotion) x.classList.add("shake"); x.insertAdjacentHTML("beforeend"," ✗"); }
+    });
+    finishCard(ok);
+  }));
+}
+
+function renderQCM(card, zone){
+  const keys = ["A","B","C","D"];
+  zone.innerHTML = `<div class="mc-options">${
+    card.options.map((o,idx)=>`<button class="mc-btn" data-idx="${idx}"><span class="mc-key">${keys[idx]}</span><span>${escapeHtml(o)}</span></button>`).join("")
+  }</div>`;
+  const btns = zone.querySelectorAll(".mc-btn");
+  // Coup de pouce : éliminer une mauvaise réponse
+  if (state.hintNext){
+    state.hintNext = false;
+    const wrong = [];
+    btns.forEach(b => { if (parseInt(b.dataset.idx,10) !== card.correctIndex) wrong.push(b); });
+    if (wrong.length){ const victim = wrong[randInt(wrong.length)]; victim.classList.add("eliminated"); victim.disabled = true; }
+  }
+  btns.forEach(b => b.addEventListener("click", () => {
+    if (state.answered || b.disabled) return;
+    const idx = parseInt(b.dataset.idx,10);
+    const ok = idx === card.correctIndex;
+    btns.forEach(x => {
+      x.disabled = true;
+      const xi = parseInt(x.dataset.idx,10);
+      if (xi === card.correctIndex){ x.classList.remove("eliminated"); x.classList.add("answer-correct"); if(!reduceMotion) x.classList.add("glow"); x.insertAdjacentHTML("beforeend"," ✓"); }
+      if (xi === idx && !ok){ x.classList.add("answer-wrong"); if(!reduceMotion) x.classList.add("shake"); x.insertAdjacentHTML("beforeend"," ✗"); }
+    });
+    finishCard(ok);
+  }));
+}
+
+/* ---------- Sélection multiple & nuage de mots ---------- */
+function renderSelect(card, zone, isCloud){
+  const sel = new Set();
+  const hint = document.createElement("p");
+  hint.className = "sel-hint";
+  hint.textContent = isCloud ? "Cliquez TOUS les bons mots, puis validez." : "Sélectionnez TOUTES les bonnes réponses, puis validez.";
+  const wrap = document.createElement("div");
+  wrap.className = isCloud ? "cloud-wrap" : "select-grid";
+  const sizes = ["cz-l", "cz-m", "cz-s"];
+  card.options.forEach((o, idx) => {
+    const b = document.createElement("button");
+    b.className = isCloud ? ("cloud-chip " + sizes[(idx * 5) % 3]) : "sel-btn";
+    b.dataset.idx = idx;
+    b.textContent = o;
+    b.addEventListener("click", () => {
+      if (state.answered) return;
+      if (sel.has(idx)) { sel.delete(idx); b.classList.remove("selected"); }
+      else { sel.add(idx); b.classList.add("selected"); }
+    });
+    wrap.appendChild(b);
+  });
+  const row = document.createElement("div");
+  row.className = "btn-row"; row.style.marginTop = "18px";
+  const val = document.createElement("button");
+  val.className = "btn btn--primary"; val.textContent = "Valider";
+  row.appendChild(val);
+  zone.appendChild(hint); zone.appendChild(wrap); zone.appendChild(row);
+
+  val.addEventListener("click", () => {
+    if (state.answered) return;
+    const correct = new Set(card.correct);
+    const ok = sel.size === correct.size && [...sel].every(i => correct.has(i));
+    wrap.querySelectorAll("button").forEach(b => {
+      b.disabled = true;
+      const i = parseInt(b.dataset.idx, 10);
+      if (correct.has(i)) { b.classList.add("answer-correct"); b.insertAdjacentHTML("beforeend", " ✓"); }
+      else if (sel.has(i)) { b.classList.add("answer-wrong"); b.insertAdjacentHTML("beforeend", " ✗"); }
+    });
+    val.disabled = true;
+    finishCard(ok);
+  });
+}
+
+/* ---------- Relier ---------- */
+function renderMatch(card, zone){
+  const lefts = Object.keys(card.pairs);
+  const rights = Object.values(card.pairs).slice();
+  for (let i = rights.length - 1; i > 0; i--) { const j = randInt(i + 1); const t = rights[i]; rights[i] = rights[j]; rights[j] = t; }
+  let selLeft = null; const chosen = {};
+  zone.innerHTML = `<p class="sel-hint">Cliquez un élément à gauche, puis son correspondant à droite. Puis validez.</p>
+    <div class="match-wrap"><div class="match-col" id="mc-left"></div><div class="match-col" id="mc-right"></div></div>
+    <div class="btn-row" style="margin-top:18px"><button class="btn btn--primary" id="btn-validate" disabled>Valider</button></div>`;
+  const L = zone.querySelector("#mc-left"), R = zone.querySelector("#mc-right");
+  lefts.forEach(l => { const b = document.createElement("button"); b.className = "match-item"; b.dataset.side = "left"; b.dataset.val = l; b.textContent = l; L.appendChild(b); });
+  rights.forEach(r => { const b = document.createElement("button"); b.className = "match-item"; b.dataset.side = "right"; b.dataset.val = r; b.textContent = r; R.appendChild(b); });
+
+  function refresh(){
+    zone.querySelectorAll(".match-item").forEach(el => { el.classList.remove("paired", "selected"); const bd = el.querySelector(".pair-badge"); if (bd) bd.remove(); });
+    for (const l in chosen) {
+      const num = lefts.indexOf(l) + 1;
+      const le = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+      const re = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen[l])}"]`);
+      if (le) { le.classList.add("paired"); le.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+      if (re) { re.classList.add("paired"); re.insertAdjacentHTML("beforeend", `<span class="pair-badge">${num}</span>`); }
+    }
+    zone.querySelector("#btn-validate").disabled = Object.keys(chosen).length !== lefts.length;
+  }
+  zone.querySelectorAll(".match-item").forEach(item => item.addEventListener("click", () => {
+    if (state.answered) return;
+    const side = item.dataset.side, val = item.dataset.val;
+    if (side === "left") {
+      zone.querySelectorAll('[data-side="left"]').forEach(e => e.classList.remove("selected"));
+      if (selLeft === val) { selLeft = null; return; }
+      selLeft = val; item.classList.add("selected");
+    } else {
+      if (!selLeft) return;
+      for (const l in chosen) { if (chosen[l] === val) delete chosen[l]; }
+      chosen[selLeft] = val; selLeft = null; refresh();
+    }
+  }));
+  zone.querySelector("#btn-validate").addEventListener("click", () => {
+    if (state.answered) return;
+    let ok = true;
+    lefts.forEach(l => {
+      const good = card.pairs[l] === chosen[l];
+      const le = zone.querySelector(`[data-side="left"][data-val="${cssEscape(l)}"]`);
+      const re = zone.querySelector(`[data-side="right"][data-val="${cssEscape(chosen[l])}"]`);
+      if (good) { if (le) le.classList.add("pair-ok"); if (re) re.classList.add("pair-ok"); }
+      else { ok = false; if (le) le.classList.add("pair-ko"); if (re) re.classList.add("pair-ko"); }
+    });
+    zone.querySelectorAll(".match-item").forEach(e => e.disabled = true);
+    zone.querySelector("#btn-validate").disabled = true;
+    finishCard(ok);
+  });
+}
+
+function finishCard(ok){
+  state.answered = true;
+  let gained = 0, lost = 0;
+  if (ok){ gained = state.curWager; state.score += gained; }
+  else if (state.curDouble){
+    // Le « rien » du double ou rien : on perd la valeur du pari de base (plancher 0)
+    lost = Math.min(LEVEL_PTS[state.curLevel], state.score);
+    state.score -= lost;
+  }
+  updateHeader();
+  if (ok && !reduceMotion){ const box = $("g-score").closest(".g-pill"); box.classList.remove("bump"); void box.offsetWidth; box.classList.add("bump"); }
+  // Explication
+  const card = state.curCard;
+  const v = $("card-verdict");
+  v.style.display = "block";
+  v.className = "verdict " + (ok ? "ok" : "ko");
+  v.textContent = ok
+    ? ("Bonne réponse ! +" + gained + " pt" + (gained>1?"s":""))
+    : (state.curDouble
+        ? ("Double ou rien perdu… −" + lost + " pt" + (lost>1?"s":""))
+        : "Mauvaise réponse — 0 point");
+  $("card-comment").textContent = card.comment;
+  $("card-anec").innerHTML = "<b>Anecdote :</b> " + escapeHtml(card.anec);
+  $("card-link").innerHTML = card.link ? `<a href="${card.link.url}" target="_blank" rel="noopener">${escapeHtml(card.link.label)} ↗</a>` : "";
+  $("card-explain").classList.add("show");
+  $("btn-continue").disabled = false;
+  $("btn-cancel").style.visibility = "visible";
+}
+
+/* ---------- Annuler / corriger la carte ---------- */
+function cancelCard(){
+  if (!state.answered) return;
+  state.score = state.preScore;
+  // on restaure aussi le bonus "double" si la carte le consommait
+  state.doubleNext = state.curDouble;
+  updateHeader();
+  renderCard();
+}
+
+/* ---------- Continuer après la carte ---------- */
+function continueAfterCard(){
+  if (!state.answered) return;
+  state.curCard = null;
+  showScreen("board");
+  updateHeader();
+  renderCenter("roll"); // affiche "Voir le résultat" si les 10 questions sont faites
+}
+
+/* ================= FINAL ================= */
+function finishRound(){
+  state.history.push({ name: state.teamName, score: state.score, avatar: state.avatar });
+  const idx = state.history.length - 1;
+  const win = state.score >= GOAL;
+  $("final-team").textContent = state.avatar + " " + state.teamName;
+  $("final-pts").textContent = state.score;
+  $("final-badge").innerHTML = win
+    ? '<div class="badge-win">🏆 Point OPEN 88 remporté</div>'
+    : '<div class="badge-encourage">Objectif manqué de peu — bravo pour la participation 👏</div>';
+  const leaders = bestTeams();
+  $("final-best").innerHTML = leaders.length
+    ? `👑 Meilleur score de l'événement : <b>${leaders.map(escapeHtml).join(" & ")}</b> (${bestScore()} pts) — en lice pour le point bonus !`
+    : "";
+  $("final-recap-body").innerHTML = recapTableHTML(idx);
+  showScreen("final");
+  if (win) launchConfetti();
+}
+function launchConfetti(){
+  if (reduceMotion) return;
+  const colors = ["#E94059","#F7A720","#FFFFFF","#1E9E5A","#6B4E9E","#2AA9A0"];
+  const n = 90;
+  for (let k=0;k<n;k++){
+    const p = document.createElement("div"); p.className="confetti-piece";
+    const dur = 2.6 + ((k*13)%20)/10, delay = ((k*7)%12)/10;
+    p.style.left = ((k/n)*100 + (((k*37)%11)-5)) + "vw";
+    p.style.background = colors[k%colors.length];
+    p.style.animation = `confettiFall ${dur}s ${delay}s ease-in forwards`;
+    if (k%3===0) p.style.width="9px"; if (k%4===0) p.style.height="12px";
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), (dur+delay)*1000+200);
+  }
+}
+
+/* ================= NOUVELLE ÉQUIPE / RESET ================= */
+function newTeam(){
+  state.nextLetter++;
+  state.teamName = nextLetterName(state.nextLetter);
+  // Propose automatiquement le premier avatar encore libre
+  const taken = new Set(state.history.map(h=>h.avatar));
+  state.avatar = AVATARS.find(a=>!taken.has(a)) || AVATARS[state.nextLetter % AVATARS.length];
+  renderHome();
+}
+function resetAll(){
+  if (!confirm("Réinitialiser tout l'événement ? Le récapitulatif des équipes sera effacé.")) return;
+  state.history = []; state.nextLetter = 0; state.teamName = "Équipe A";
+  state.eventUsed = new Set();
+  renderHome();
+}
+
+/* ================= PODIUM DE CLÔTURE ================= */
+function renderPodium(){
+  const sorted = [...state.history].sort((a,b)=>b.score-a.score);
+  const best = sorted.length ? sorted[0].score : 0;
+  const medals = ["🥇","🥈","🥉"];
+  $("podium-list").innerHTML = sorted.length
+    ? sorted.map((h,i)=>{
+        const crown = best > 0 && h.score === best;
+        return `<div class="podium-row${crown?" first":""}">
+          <span class="rank">${medals[i] || (i+1)+"."}</span>
+          <span class="name">${h.avatar||""} ${escapeHtml(h.name)}${crown?" 👑":""}</span>
+          <span class="tags">${h.score>=GOAL?"🏆 Point OPEN 88":""}</span>
+          <span class="pts">${h.score} pts</span>
+        </div>`;
+      }).join("")
+    : '<p style="color:rgba(255,255,255,0.7);font-style:italic">Aucune équipe n\'a encore joué.</p>';
+  const leaders = bestTeams().map(escapeHtml);
+  $("podium-bonus").innerHTML = leaders.length === 1
+    ? `⭐ <b>${leaders[0]}</b> remporte le point bonus du meilleur score !`
+    : leaders.length > 1
+      ? `⭐ Égalité au meilleur score (${leaders.join(" & ")}) — départagez-les pour attribuer le point bonus !`
+      : "";
+  showScreen("podium");
+  launchConfetti();
+}
+
+/* ================= ÉVÉNEMENTS ================= */
+$("btn-start").addEventListener("click", startRound);
+$("btn-rules").addEventListener("click", () => showScreen("rules"));
+$("btn-rules-start").addEventListener("click", startRound);
+$("btn-rules-back").addEventListener("click", renderHome);
+$("btn-continue").addEventListener("click", continueAfterCard);
+$("btn-cancel").addEventListener("click", cancelCard);
+$("btn-newteam").addEventListener("click", newTeam);
+$("btn-reset").addEventListener("click", resetAll);
+$("btn-podium").addEventListener("click", renderPodium);
+$("btn-podium-back").addEventListener("click", () => showScreen("final"));
+$("btn-score-minus").addEventListener("click", () => { state.score = Math.max(0, state.score - 1); updateHeader(); });
+$("btn-score-plus").addEventListener("click", () => { state.score++; updateHeader(); });
+$("teamName").addEventListener("keydown", (e)=>{ if(e.key==="Enter") startRound(); });
+
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target.tagName||"").toLowerCase();
+  if (tag === "input") return;
+  if (e.key === "f" || e.key === "F"){ e.preventDefault(); toggleFullscreen(); return; }
+  if (screens.board.classList.contains("active") && !$("modal").classList.contains("show")){
+    if (e.key === "Enter" || e.key === " "){ const b = $("btn-roll"); if (b && !b.disabled){ e.preventDefault(); b.click(); } }
+  } else if (screens.card.classList.contains("active")){
+    if (e.key === "Enter"){ const b = $("btn-continue"); if (b && !b.disabled){ e.preventDefault(); b.click(); } }
+  }
+});
+
+/* ---------- Plein écran (Échap sort nativement) ---------- */
+function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+function toggleFullscreen(){
+  if (!fsElement()){
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) { try { const p = req.call(el); if (p && p.catch) p.catch(()=>{}); } catch(e){} }
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) { try { exit.call(document); } catch(e){} }
+  }
+}
+function updateFsBtn(){
+  const on = !!fsElement();
+  const lbl = $("fs-label"); if (lbl) lbl.textContent = on ? "Quitter le plein écran" : "Plein écran";
+  const ico = document.querySelector(".fs-toggle .fs-ico"); if (ico) ico.textContent = on ? "⤢" : "⛶";
+}
+$("btn-fullscreen").addEventListener("click", toggleFullscreen);
+document.addEventListener("fullscreenchange", updateFsBtn);
+document.addEventListener("webkitfullscreenchange", updateFsBtn);
+
+/* ================= INIT ================= */
+renderLegend();
+renderHome();
+</script>
+</body>
+</html>
